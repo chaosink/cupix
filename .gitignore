@@ -31,6 +31,10 @@
 *.out
 *.app
 
-# Build Directories
+# Build
 build*
 
+# CLion
+cmake-build-debug
+cmake-build-release
+.idea
