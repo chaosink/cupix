@@ -5,6 +5,7 @@ using namespace std;
 #include "cupix.hpp"
 
 #include <cuda_gl_interop.h>
+#include <glm/gtc/random.hpp>
 
 namespace cupix {
 
@@ -36,28 +37,40 @@ void VertexShader(VertexIn *in, VertexOut *out, glm::mat4 *mvp) {
 
 	out[x].position = *mvp * glm::vec4(in[x].position, 1.f);
 	out[x].normal = in[x].normal;
+	out[x].color = in[x].color;
 }
 
 __global__
-void GetAABB(VertexOut *in, AABB *aabb) {
+void WindowSpace(VertexOut *v) {
+	int x = threadIdx.x + blockIdx.x * blockDim.x;
+	if(x >= n_triangle * 3) return;
+
+	float w_inv = 1.f / v[x].position.w;
+	glm::mat4 m;
+	glm::vec4 p = v[x].position;
+	p.x = (p.x * w_inv * 0.5f + 0.5f) * w;
+	p.y = (p.y * w_inv * 0.5f + 0.5f) * h;
+	v[x].position.x = p.x;
+	v[x].position.y = p.y;
+}
+
+__global__
+void GetAABB(VertexOut *v, AABB *aabb) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	if(x >= n_triangle) return;
 
 	glm::vec2
-		p1 = glm::vec2(in[x * 3 + 0].position.x, in[x * 3 + 0].position.y) / in[x * 3 + 0].position.w,
-		p2 = glm::vec2(in[x * 3 + 1].position.x, in[x * 3 + 1].position.y) / in[x * 3 + 1].position.w,
-		p3 = glm::vec2(in[x * 3 + 2].position.x, in[x * 3 + 2].position.y) / in[x * 3 + 2].position.w;
-	p1 = (p1 * 0.5f + 0.5f) * glm::vec2(w, h);
-	p2 = (p2 * 0.5f + 0.5f) * glm::vec2(w, h);
-	p3 = (p3 * 0.5f + 0.5f) * glm::vec2(w, h);
+		p1(v[x * 3 + 0].position.x, v[x * 3 + 0].position.y),
+		p2(v[x * 3 + 1].position.x, v[x * 3 + 1].position.y),
+		p3(v[x * 3 + 2].position.x, v[x * 3 + 2].position.y);
 	glm::vec2
 		v_min = glm::min(glm::min(p1, p2), p3),
 		v_max = glm::max(glm::max(p1, p2), p3);
 	glm::ivec2
 		c0 = glm::ivec2(0, 0),
 		c1 = glm::ivec2(w - 1, h - 1),
-		iv_min = glm::ceil(v_min),
-		iv_max = glm::floor(v_max);
+		iv_min = v_min + 0.5f,
+		iv_max = v_max + 0.5f;
 
 	iv_min = glm::clamp(iv_min, c0, c1);
 	iv_max = glm::clamp(iv_max, c0, c1);
@@ -66,21 +79,49 @@ void GetAABB(VertexOut *in, AABB *aabb) {
 	aabb[x].v[1] = iv_max;
 }
 
-__device__
-glm::vec3 GetBarycentric() {
+// __device__ __host__
+// float TriangleArea(glm::vec2 p0, glm::vec2 p1, glm::vec2 p2) {
+// 	return ((p2.x - p0.x) * (p1.y - p0.y) - (p1.x - p0.x) * (p2.y - p0.y)) * 0.5f;
+// }
 
-}
+// __device__ __host__
+// glm::vec3 GetBarycentric(VertexOut *v, glm::vec2 p) {
+// 	glm::vec2
+// 		p0(v[0].position.x, v[0].position.y),
+// 		p1(v[1].position.x, v[1].position.y),
+// 		p2(v[2].position.x, v[2].position.y);
+// 	// p0 *= v[0].position.w;
+// 	// p1 *= v[1].position.w;
+// 	// p2 *= v[2].position.w;
+// 	// p *= v[2].position.w;
+// 	float
+// 		a0 = TriangleArea(p, p1, p2),
+// 		a1 = TriangleArea(p, p2, p0),
+// 		a2 = TriangleArea(p, p0, p1),
+// 		a  = TriangleArea(p0, p1, p2);
+// 	return glm::vec3(a0 / a, a1 / a, a2 / a);
+// }
 
-__device__
-void Interpolate(VertexOut *v, FragmentIn *f) {
-	// glm::vec3 b = GetBarycentric(
-	// 	v[0].position,
-	// 	v[1].position,
-	// 	v[2].position);
+__device__ __host__
+void Interpolate(VertexOut *v, FragmentIn *f, glm::vec3 e) {
+	// glm::vec2 p(f->position.x + 0.5f, f->position.y + 0.5f);
+	// glm::vec3 b = GetBarycentric(v, p);
+	f->depth =
+		v[0].position.z * e.x +
+		v[1].position.z * e.y +
+		v[2].position.z * e.z;
+	f->normal =
+		v[0].normal * e.x +
+		v[1].normal * e.y +
+		v[2].normal * e.z;
+	f->color =
+		v[0].color * e.x +
+		v[1].color * e.y +
+		v[2].color * e.z;
 }
 
 __global__
-void Rasterize(VertexOut *v, float *depth_buf, unsigned char* frame_buf, int i, glm::ivec2 corner, glm::ivec2 dim) {
+void Rasterize(VertexOut *v, float *depth_buf, unsigned char* frame_buf, glm::ivec2 corner, glm::ivec2 dim) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	int y = threadIdx.y + blockIdx.y * blockDim.y;
 	if(x >= dim.x || y >= dim.y) return;
@@ -89,27 +130,24 @@ void Rasterize(VertexOut *v, float *depth_buf, unsigned char* frame_buf, int i, 
 	if(x >= w || y >= h) return;
 	int i_thread = y * w + x;
 
-	if(v[i * 3 + 0].position.z < 0
-	|| v[i * 3 + 1].position.z < 0
-	|| v[i * 3 + 2].position.z < 0) return;
+	if(v[0].position.z < 0
+	|| v[1].position.z < 0
+	|| v[2].position.z < 0) return;
 	glm::vec2
-		p1 = glm::vec2(v[i * 3 + 0].position.x, v[i * 3 + 0].position.y) / v[i * 3 + 0].position.w,
-		p2 = glm::vec2(v[i * 3 + 1].position.x, v[i * 3 + 1].position.y) / v[i * 3 + 1].position.w,
-		p3 = glm::vec2(v[i * 3 + 2].position.x, v[i * 3 + 2].position.y) / v[i * 3 + 2].position.w;
-	p1 = (p1 * 0.5f + 0.5f) * glm::vec2(w, h);
-	p2 = (p2 * 0.5f + 0.5f) * glm::vec2(w, h);
-	p3 = (p3 * 0.5f + 0.5f) * glm::vec2(w, h);
+		p1 = glm::vec2(v[0].position.x, v[0].position.y),
+		p2 = glm::vec2(v[1].position.x, v[1].position.y),
+		p3 = glm::vec2(v[2].position.x, v[2].position.y);
 
-	glm::vec2 d12 = p1 - p2, d23 = p2 - p3, d31 = p3 - p1;
-	float e1 = glm::dot(d12, glm::vec2(y - p1.y, p1.x - x));
-	float e2 = glm::dot(d23, glm::vec2(y - p2.y, p2.x - x));
-	float e3 = glm::dot(d31, glm::vec2(y - p3.y, p3.x - x));
+	glm::vec2 d12 = p2 - p1, d23 = p3 - p2, d31 = p1 - p3;
+	float e1 = glm::dot(d12, glm::vec2(y + 0.5f - p1.y, p1.x - x - 0.5f));
+	float e2 = glm::dot(d23, glm::vec2(y + 0.5f - p2.y, p2.x - x - 0.5f));
+	float e3 = glm::dot(d31, glm::vec2(y + 0.5f - p3.y, p3.x - x - 0.5f));
 
-	if(e1 <= 0 && e2 <= 0 && e3 <= 0) {
+	if(e1 >= 0 && e2 >= 0 && e3 >= 0) {
 		FragmentIn fragment = {glm::ivec2(x, y)};
-		Interpolate(v + i * 3, &fragment);
-		glm::vec3 c = v[i * 3 + 0].normal + v[i * 3 + 1].normal + v[i * 3 + 2].normal;
-		c = (c / 3.f + 1.f) * 0.5f * 255.f;
+		float e = e1 + e2 + e3;
+		Interpolate(v, &fragment, glm::vec3(e1, e2, e3) / e);
+		glm::vec3 c = fragment.color * 255.f;
 		frame_buf[i_thread * 3 + 0] = c.r;
 		frame_buf[i_thread * 3 + 1] = c.g;
 		frame_buf[i_thread * 3 + 2] = c.b;
@@ -235,6 +273,7 @@ void CUPix::Clear() {
 
 void CUPix::Draw() {
 	cu::VertexShader<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_in_, vertex_out_, mvp_buf_);
+	cu::WindowSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_out_);
 	cu::GetAABB<<<(n_triangle_-1)/32+1, 32>>>(vertex_out_, aabb_buf_);
 	cudaMemcpy(aabb_, aabb_buf_, sizeof(AABB) * n_triangle_, cudaMemcpyDeviceToHost);
 	for(int i = 0; i < n_triangle_; i++) {
@@ -242,7 +281,7 @@ void CUPix::Draw() {
 		cu::Rasterize<<<
 			dim3((dim.x-1)/4+1, (dim.y-1)/8+1),
 			dim3(4, 8)>>>
-			(vertex_out_, depth_buf_, pbo_ptr_, i, aabb_[i].v[0], dim);
+			(vertex_out_ + i * 3, depth_buf_, pbo_ptr_, aabb_[i].v[0], dim);
 		// FragmentShader<<<>>>();
 	}
 }
@@ -254,7 +293,7 @@ void CUPix::VertexData(int size, float *position, float *normal) {
 	for(int i = 0; i < n_vertex_; i++) {
 		v[i].position = glm::vec3(position[i * 3], position[i * 3 + 1], position[i * 3 + 2]);
 		v[i].normal = glm::vec3(normal[i * 3], normal[i * 3 + 1], normal[i * 3 + 2]);
-		v[i].color = glm::vec3(1.f, 1.f, 1.f);
+		v[i].color = glm::linearRand(glm::vec3(0.f), glm::vec3(1.f));
 	}
 	cudaMalloc(&vertex_in_, sizeof(v));
 	cudaMemcpy(vertex_in_, v, sizeof(v), cudaMemcpyHostToDevice);
