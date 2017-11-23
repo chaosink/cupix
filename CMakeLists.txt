@@ -18,8 +18,17 @@ find_package(glfw3 3.3 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(OpenCV REQUIRED)
 
-cuda_add_executable(cupix cupix.cu cupix.hpp main.cpp)
+set(SOURCE_FILES
+	src/main.cpp
+	src/cupix.cu
+	util/obj.cpp
+	util/objloader.cpp
+	util/camera.cpp
+)
+
+cuda_add_executable(cupix ${SOURCE_FILES})
 target_include_directories(cupix PUBLIC ${OPENGL_INCLUDE_DIR})
+target_include_directories(cupix PUBLIC .)
 target_link_libraries(cupix
 	${CUDA_LIBRARIES}
 	${OPENGL_gl_LIBRARY}
