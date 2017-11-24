@@ -74,6 +74,10 @@ int main(int argc, char *argv[]) {
 	int window_w = 1280;
 	int window_h = 720;
 
+	glm::vec4 v(0.1f, 0.2f, 0.3f, 0.4f);
+	glm::ivec4 iv = v * 255.f;
+	cout << "iv" << iv.r << " " << iv.g << " "  << iv.b << endl;
+
 	GLFWwindow* window = InitGLFW(window_w, window_h);
 	GLuint pbo = InitGL(window_w, window_h);
 

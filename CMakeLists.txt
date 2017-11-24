@@ -32,7 +32,7 @@ include_directories(
 	src/thirdparty
 	src/thirdparty/glew-2.1.0/include
 	src/thirdparty/glfw-3.2.1/include
-	src/thirdparty/glm-0.9.8.5
+	# src/thirdparty/glm-0.9.8.5
 	${OPENGL_INCLUDE_DIR}
 )
 

@@ -12,6 +12,7 @@ namespace cu {
 
 __constant__ __device__ int w, h;
 __constant__ __device__ int n_triangle;
+__constant__ __device__ unsigned char clear_color[4];
 texture<uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat> texture;
 
 extern __device__
@@ -21,14 +22,14 @@ extern __device__
 void FragmentShader(FragmentIn &in, glm::vec4 &color);
 
 __global__
-void Clear(unsigned char *frame_buf, float *depth_buf, glm::vec3 color) {
+void Clear(unsigned char *frame_buf, float *depth_buf, glm::ivec3 color) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	int y = threadIdx.y + blockIdx.y * blockDim.y;
 	if(x >= w || y >= h) return;
 	int i_thread = y * w + x;
-	frame_buf[i_thread * 3 + 0] = glm::clamp(color.r, 0.f, 1.f) * 255;
-	frame_buf[i_thread * 3 + 1] = glm::clamp(color.g, 0.f, 1.f) * 255;
-	frame_buf[i_thread * 3 + 2] = glm::clamp(color.b, 0.f, 1.f) * 255;
+	frame_buf[i_thread * 3 + 0] = color.r;
+	frame_buf[i_thread * 3 + 1] = color.g;
+	frame_buf[i_thread * 3 + 2] = color.b;
 	depth_buf[i_thread] = 0;
 }
 
@@ -253,7 +254,21 @@ void CUPix::UnmapResources() {
 }
 
 void CUPix::ClearColor(float r, float g, float b, float a) {
+	glm::vec4 v(0.1f, 0.2f, 0.3f, 0.4f);
+	glm::ivec4 iv = v * 255.f;
+	cout << "iv" << iv.r << " " << iv.g << " "  << iv.b << endl;
+
 	clear_color_ = glm::vec4(r, g, b, a);
+	glm::vec3 cc = clear_color_ * 255.f;
+	cout << "cc" << cc.r << " " << cc.g << " "  << cc.b << endl;
+
+	glm::ivec4 ic(r * 255.f, g * 255.f, b * 255.f, a * 255.f);
+	cout << ic.r << " " << ic.g << " "  << ic.b << endl;
+	unsigned char clear_color[4];
+	clear_color[0] = r * 255.f;
+	clear_color[1] = g * 255.f;
+	clear_color[2] = b * 255.f;
+	clear_color[3] = a * 255.f;
 }
 
 void CUPix::Clear() {
@@ -262,7 +277,7 @@ void CUPix::Clear() {
 		dim3(32, 32)>>>(
 			pbo_ptr_,
 			depth_buf_,
-			glm::vec3(clear_color_.r, clear_color_.g, clear_color_.b));
+			glm::ivec3(clear_color_.r, clear_color_.g, clear_color_.b));
 }
 
 void CUPix::Draw() {
