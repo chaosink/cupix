@@ -17,4 +17,7 @@ public:
 			fflush(stdout);
 		}
 	}
+	~FPS() {
+		printf("\n");
+	}
 };
