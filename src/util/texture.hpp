@@ -11,7 +11,7 @@ class Texture {
 public:
 	Texture(const char *file_name) {
 		data_ = stbi_load(file_name, &w_, &h_, NULL, 3);
-		printf("Texture loaded.\n\n");
+		printf("Texture loaded. Texture Size: %d x %d\n\n", w_, h_);
 	}
 	~Texture() {
 		free(data_);

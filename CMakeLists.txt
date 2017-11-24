@@ -1,10 +1,16 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(cupix)
 
+option(GLFW_BUILD_EXAMPLES "Build the GLFW example programs" OFF)
+option(GLFW_BUILD_TESTS "Build the GLFW test programs" OFF)
+option(GLFW_BUILD_DOCS "Build the GLFW documentation" OFF)
+add_subdirectory(src/thirdparty/glfw-3.2.1)
+
+option(BUILD_UTILS "utilities" OFF)
+add_subdirectory(src/thirdparty/glew-2.1.0/build/cmake)
+
 find_package(CUDA 9.0 REQUIRED)
-find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(OpenCV REQUIRED)
 
 # C++ list
 list(APPEND CMAKE_CXX_FLAGS "-std=c++11 -Wall")
@@ -21,26 +27,28 @@ list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_61,code=sm_61)
 # set(CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE ON)
 set(CUDA_SEPARABLE_COMPILATION ON)
 
+include_directories(
+	src/core
+	src/thirdparty
+	src/thirdparty/glew-2.1.0/include
+	src/thirdparty/glfw-3.2.1/include
+	src/thirdparty/glm-0.9.8.5
+	${OPENGL_INCLUDE_DIR}
+)
+
 cuda_add_library(core
 	src/core/shader.cu
 	src/core/cupix.cu
 )
 
-set(SOURCE_FILES
+cuda_add_executable(cupix
 	src/main.cpp
 	src/util/camera.cpp
 )
-
-cuda_add_executable(cupix ${SOURCE_FILES})
-target_include_directories(cupix PUBLIC
-	src/core
-	${OPENGL_INCLUDE_DIR}
-)
 target_link_libraries(cupix
 	core
+	glew
+	glfw
 	${CUDA_LIBRARIES}
 	${OPENGL_gl_LIBRARY}
-	glfw
-	GLEW
-	${OpenCV_LIBS}
 )
