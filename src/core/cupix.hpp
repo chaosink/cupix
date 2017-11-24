@@ -11,23 +11,24 @@ struct VertexIn {
 	glm::vec3 position;
 	glm::vec3 normal;
 	glm::vec3 color;
+	glm::vec2 uv;
 };
 struct VertexOut {
 	glm::vec4 position;
 	glm::vec3 normal;
 	glm::vec3 color;
+	glm::vec2 uv;
 };
 struct FragmentIn {
 	glm::ivec2 position;
+	float z;
 	float depth;
 	glm::vec3 normal;
 	glm::vec3 color;
+	glm::vec2 uv;
 };
 struct AABB {
 	glm::ivec2 v[2];
-};
-struct Triangle {
-	VertexOut v[3];
 };
 
 class CUPix {
@@ -42,6 +43,7 @@ class CUPix {
 	glm::mat4 *mvp_buf_;
 	float *frame_buf_;
 	float *depth_buf_;
+	unsigned char *texture_buf_;
 public:
 	CUPix(int window_w, int window_h, unsigned int buffer);
 	~CUPix();
@@ -50,21 +52,9 @@ public:
 	void ClearColor(float r, float g, float b, float a);
 	void Clear();
 	void Draw();
-	void VertexData(int size, float *position, float *normal);
+	void VertexData(int size, float *position, float *normal, float *uv);
 	void MVP(glm::mat4 &mvp);
+	void Texture(unsigned char *data, int w, int h);
 };
-
-// namespace cu { // CUDA kernels
-
-// __global__
-// void Clear(unsigned char *buffer, int w, int h, glm::vec4 color);
-
-// __global__
-// void T1(unsigned char *buffer, int w, int h);
-
-// __global__
-// void Test(glm::vec3 c);
-
-// }
 
 }

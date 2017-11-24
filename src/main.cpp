@@ -5,10 +5,11 @@ using namespace std;
 #include <GLFW/glfw3.h>
 
 #include "cupix.hpp"
+#include "util/model.hpp"
 #include "util/fps.hpp"
-#include "util/objloader.hpp"
 #include "util/camera.hpp"
-#include "util/control.hpp"
+#define STB_IMAGE_IMPLEMENTATION
+#include "util/stb_image.h"
 
 using namespace cupix;
 
@@ -65,13 +66,6 @@ void UpdateGL(GLFWwindow *window, int window_w, int window_h) {
 	glfwPollEvents();
 }
 
-obj* LoadOBJ(char *file) {
-	obj *mesh = new obj();
-	objLoader loader(file, mesh);
-	mesh->buildBufPoss();
-	return mesh;
-}
-
 int main(int argc, char *argv[]) {
 	if(argc != 2) {
 		printf("Usage: cupix obj_file\n");
@@ -87,8 +81,13 @@ int main(int argc, char *argv[]) {
 	CUPix pix(window_w, window_h, pbo);
 	pix.ClearColor(0.08f, 0.16f, 0.24f, 1.f);
 
-	obj *mesh = LoadOBJ(argv[1]);
-	pix.VertexData(mesh->getBufPossize(), mesh->getBufPos(), mesh->getBufNor());
+	Model model(argv[1]);
+	pix.VertexData(model.n_vertex(), model.vertex(), model.normal(), model.uv());
+
+	int texture_w, texture_h;
+	unsigned char *texture_data;
+	texture_data = stbi_load("../texture/uv.png", &texture_w, &texture_h, NULL, 3);
+	pix.Texture(texture_data, texture_w, texture_h);
 
 	Camera camera(window, window_w, window_h);
 	FPS fps;
@@ -96,7 +95,7 @@ int main(int argc, char *argv[]) {
 		pix.MapResources();
 		pix.Clear();
 
-		glm::mat4 m = glm::mat4(1.f);
+		glm::mat4 m;
 		glm::mat4 v = camera.v();
 		glm::mat4 p = camera.p();
 		glm::mat4 mvp = p * v * m;

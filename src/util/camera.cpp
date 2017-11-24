@@ -1,4 +1,5 @@
 #include "camera.hpp"
+#include <glm/gtc/matrix_transform.hpp>
 
 void Camera::Update() {
 	time_new_ = glfwGetTime();
@@ -50,9 +51,9 @@ void Camera::Update() {
 		speed_ -= 1;
 	}
 	if(glfwGetKey(window_, GLFW_KEY_SPACE) == GLFW_PRESS) {
-		position_ = glm::vec3(0.f, 0.f, 5.f);
-		angle_horizontal_ = PI;
-		angle_vertical_ = 0.f;
+		position_ = position_init_;
+		angle_horizontal_ = angle_horizontal_init_;
+		angle_vertical_ = angle_vertical_init_;
 	}
 
 	// Camera matrix
