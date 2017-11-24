@@ -138,10 +138,11 @@ void Rasterize(VertexOut *v, float *depth_buf, unsigned char* frame_buf, glm::iv
 			depth_buf[i_thread] = 1 - fragment.z;
 			glm::vec4 color;
 			FragmentShader(fragment, color);
-			color = glm::clamp(color, glm::vec4(0.f), glm::vec4(1.f));
-			frame_buf[i_thread * 3 + 0] = color.r * 255;
-			frame_buf[i_thread * 3 + 1] = color.g * 255;
-			frame_buf[i_thread * 3 + 2] = color.b * 255;
+			glm::ivec4 icolor = color * 255.f;
+			icolor = glm::clamp(icolor, glm::ivec4(0), glm::ivec4(255));
+			frame_buf[i_thread * 3 + 0] = icolor.r;
+			frame_buf[i_thread * 3 + 1] = icolor.g;
+			frame_buf[i_thread * 3 + 2] = icolor.b;
 		}
 	}
 
@@ -316,6 +317,7 @@ void CUPix::Texture(unsigned char *d, int w, int h) {
 		cudaMemcpyHostToDevice);
 
 	cu::texture.normalized = true;
+	cu::texture.sRGB = true;
 	cu::texture.filterMode = cudaFilterModeLinear;
 	cu::texture.addressMode[0] = cudaAddressModeWrap;
 	cu::texture.addressMode[1] = cudaAddressModeWrap;

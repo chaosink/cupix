@@ -6,10 +6,9 @@ using namespace std;
 
 #include "cupix.hpp"
 #include "util/model.hpp"
-#include "util/fps.hpp"
+#include "util/texture.hpp"
 #include "util/camera.hpp"
-#define STB_IMAGE_IMPLEMENTATION
-#include "util/stb_image.h"
+#include "util/fps.hpp"
 
 using namespace cupix;
 
@@ -84,10 +83,8 @@ int main(int argc, char *argv[]) {
 	Model model(argv[1]);
 	pix.VertexData(model.n_vertex(), model.vertex(), model.normal(), model.uv());
 
-	int texture_w, texture_h;
-	unsigned char *texture_data;
-	texture_data = stbi_load("../texture/uv.png", &texture_w, &texture_h, NULL, 3);
-	pix.Texture(texture_data, texture_w, texture_h);
+	Texture texture("../texture/uv.png");
+	pix.Texture(texture.data(), texture.w(), texture.h());
 
 	Camera camera(window, window_w, window_h);
 	FPS fps;

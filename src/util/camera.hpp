@@ -19,7 +19,7 @@ class Camera {
 	float angle_horizontal_ = angle_horizontal_init_;
 	float angle_vertical_ = angle_vertical_init_;
 
-	float fov_ = 45.f;
+	float fov_ = PI / 4.f;
 	float speed_ = 2.0f;
 	float mouse_speed_ = 0.002f;
 
