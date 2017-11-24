@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(cupix)
 
-option(GLFW_BUILD_EXAMPLES "Build the GLFW example programs" OFF)
-option(GLFW_BUILD_TESTS "Build the GLFW test programs" OFF)
-option(GLFW_BUILD_DOCS "Build the GLFW documentation" OFF)
-add_subdirectory(src/thirdparty/glfw-3.2.1)
+find_package(CUDA 9.0 REQUIRED)
+find_package(OpenGL REQUIRED)
 
 option(BUILD_UTILS "utilities" OFF)
 add_subdirectory(src/thirdparty/glew-2.1.0/build/cmake)
 
-find_package(CUDA 9.0 REQUIRED)
-find_package(OpenGL REQUIRED)
+option(GLFW_BUILD_EXAMPLES "Build the GLFW example programs" OFF)
+option(GLFW_BUILD_TESTS "Build the GLFW test programs" OFF)
+option(GLFW_BUILD_DOCS "Build the GLFW documentation" OFF)
+add_subdirectory(src/thirdparty/glfw-3.2.1)
 
 # C++ list
 list(APPEND CMAKE_CXX_FLAGS "-std=c++11 -Wall")
@@ -47,7 +47,7 @@ cuda_add_executable(cupix
 )
 target_link_libraries(cupix
 	core
-	glew
+	glew_s
 	glfw
 	${CUDA_LIBRARIES}
 	${OPENGL_gl_LIBRARY}
