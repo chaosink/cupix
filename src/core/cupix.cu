@@ -153,17 +153,22 @@ void Rasterize(VertexOut *v, float *depth_buf, unsigned char* frame_buf, glm::iv
 
 
 
-CUPix::CUPix(int window_w, int window_h, GLuint pbo) : window_w_(window_w), window_h_(window_h) {
+CUPix::CUPix(int window_w, int window_h, GLuint pbo, bool record = false)
+	: window_w_(window_w), window_h_(window_h), record_(record) {
+	frame_ = new unsigned char[window_w_ * window_h_ * 3];
 	cudaMalloc(&depth_buf_, sizeof(float) * window_w_ * window_h_);
-	cudaMemset(depth_buf_, 0, sizeof(float) * window_w_ * window_h_);
 	cudaMalloc(&frame_buf_, sizeof(float) * window_w_ * window_h_);
 	cudaMalloc(&mvp_buf_, sizeof(glm::mat4));
-	cudaGraphicsGLRegisterBuffer(&pbo_resource_, pbo, cudaGraphicsMapFlagsNone);
 	cudaMemcpyToSymbol(cu::w, &window_w_, sizeof(int));
 	cudaMemcpyToSymbol(cu::h, &window_h_, sizeof(int));
+	cudaGraphicsGLRegisterBuffer(&pbo_resource_, pbo, cudaGraphicsMapFlagsNone);
 }
 
 CUPix::~CUPix() {
+	delete[] frame_;
+	cudaFree(depth_buf_);
+	cudaFree(frame_buf_);
+	cudaFree(mvp_buf_);
 	cudaGraphicsUnregisterResource(pbo_resource_);
 }
 
@@ -198,6 +203,8 @@ void CUPix::Draw() {
 		cu::Rasterize<<<dim3((dim.x-1)/4+1, (dim.y-1)/8+1), dim3(4, 8)>>>
 			(vertex_out_ + i * 3, depth_buf_, pbo_ptr_, aabb_[i].v[0], dim);
 	}
+	if(record_)
+		cudaMemcpy(frame_, pbo_ptr_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
 }
 
 void CUPix::VertexData(int size, float *position, float *normal, float *uv) {

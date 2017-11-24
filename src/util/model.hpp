@@ -51,7 +51,7 @@ public:
 				index_offset += fv;
 			}
 		}
-		printf("Model loaded. Number of faces: %d. Number of vertices: %d\n\n", n_vertex_ / 3, n_vertex_);
+		printf("Model loaded. Number of faces: %d. Number of vertices: %d\n", n_vertex_ / 3, n_vertex_);
 	}
 	~Model() {
 		delete[] vertex_;

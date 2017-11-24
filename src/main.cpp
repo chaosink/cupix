@@ -9,6 +9,7 @@ using namespace std;
 #include "util/texture.hpp"
 #include "util/camera.hpp"
 #include "util/fps.hpp"
+#include "util/video.hpp"
 
 using namespace cupix;
 
@@ -65,10 +66,12 @@ void UpdateGL(GLFWwindow *window, int window_w, int window_h) {
 }
 
 int main(int argc, char *argv[]) {
-	if(argc != 2) {
-		printf("Usage: cupix obj_file\n");
+	if(argc < 2) {
+		printf("Usage: cupix obj_file [video_file]\n");
 		return 0;
 	}
+	bool record = false;
+	if(argc == 3) record = true;
 
 	int window_w = 1280;
 	int window_h = 720;
@@ -76,7 +79,7 @@ int main(int argc, char *argv[]) {
 	GLFWwindow* window = InitGLFW(window_w, window_h);
 	GLuint pbo = InitGL(window_w, window_h);
 
-	CUPix pix(window_w, window_h, pbo);
+	CUPix pix(window_w, window_h, pbo, record);
 	pix.ClearColor(0.08f, 0.16f, 0.24f, 1.f);
 
 	Model model(argv[1]);
@@ -87,6 +90,7 @@ int main(int argc, char *argv[]) {
 
 	Camera camera(window, window_w, window_h);
 	FPS fps;
+	Video video(window_w, window_h);
 	while(glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window)) {
 		pix.MapResources();
 		pix.Clear();
@@ -98,15 +102,18 @@ int main(int argc, char *argv[]) {
 		pix.MVP(mvp);
 
 		pix.Time(glfwGetTime());
-
 		pix.Draw();
 		pix.UnmapResources();
 
 		UpdateGL(window, window_w, window_h);
 		camera.Update();
 		fps.Update();
+		video.Add(pix.frame());
 	}
+	fps.Term();
 
 	TermGL(pbo);
 	TermGLFW(window);
+
+	video.Save(argv[2]);
 }

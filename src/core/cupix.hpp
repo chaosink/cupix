@@ -35,6 +35,7 @@ class CUPix {
 	int window_w_, window_h_;
 	cudaGraphicsResource *pbo_resource_;
 	unsigned char *pbo_ptr_;
+	bool record_;
 	glm::vec4 clear_color_;
 	int n_triangle_, n_vertex_;
 	VertexIn *vertex_in_;
@@ -44,8 +45,9 @@ class CUPix {
 	float *frame_buf_;
 	float *depth_buf_;
 	unsigned char *texture_buf_;
+	unsigned char *frame_;
 public:
-	CUPix(int window_w, int window_h, unsigned int buffer);
+	CUPix(int window_w, int window_h, unsigned int buffer, bool record);
 	~CUPix();
 	void MapResources();
 	void UnmapResources();
@@ -56,6 +58,9 @@ public:
 	void MVP(glm::mat4 &mvp);
 	void Time(double time);
 	void Texture(unsigned char *data, int w, int h);
+	unsigned char* frame() {
+		return frame_;
+	}
 };
 
 }

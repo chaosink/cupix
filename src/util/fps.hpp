@@ -17,7 +17,7 @@ public:
 			fflush(stdout);
 		}
 	}
-	~FPS() {
+	void Term() {
 		printf("\n");
 	}
 };
