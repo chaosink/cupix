@@ -54,6 +54,7 @@ public:
 	void Draw();
 	void VertexData(int size, float *position, float *normal, float *uv);
 	void MVP(glm::mat4 &mvp);
+	void Time(double time);
 	void Texture(unsigned char *data, int w, int h);
 };
 

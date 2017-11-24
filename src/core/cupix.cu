@@ -11,9 +11,11 @@ namespace cupix {
 namespace cu {
 
 __constant__ __device__ int w, h;
+__constant__ __device__ float time;
+texture<uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat> texture;
+
 __constant__ __device__ int n_triangle;
 __constant__ __device__ unsigned char clear_color[4];
-texture<uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat> texture;
 
 extern __device__
 void VertexShader(VertexIn &in, VertexOut &out, glm::mat4 &mvp);
@@ -145,84 +147,6 @@ void Rasterize(VertexOut *v, float *depth_buf, unsigned char* frame_buf, glm::iv
 			frame_buf[i_thread * 3 + 2] = icolor.b;
 		}
 	}
-
-	// for(int i = 0; i < n_triangle; i++) {
-	// 	if(in[i * 3 + 0].position.z < 0
-	// 	|| in[i * 3 + 1].position.z < 0
-	// 	|| in[i * 3 + 2].position.z < 0) continue;
-	// 	// glm::vec2 p1(0.f, 0.f), p2(0.1f, 0.f), p3(0.f, 0.1f);
-	// 	// p1 = (p1 * 0.5f + 0.5f) * glm::vec2(w, h);
-	// 	// p2 = (p2 * 0.5f + 0.5f) * glm::vec2(w, h);
-	// 	// p3 = (p3 * 0.5f + 0.5f) * glm::vec2(w, h);
-	// 	glm::vec2
-	// 		// p1(10.2f, 10.8f), p2(300.3f, 30.1f), p3(200.7f, 300.5f);
-	// 		p1 = glm::vec2(in[i * 3 + 0].position.x, in[i * 3 + 0].position.y) / in[i * 3 + 0].position.w,
-	// 		p2 = glm::vec2(in[i * 3 + 1].position.x, in[i * 3 + 1].position.y) / in[i * 3 + 1].position.w,
-	// 		p3 = glm::vec2(in[i * 3 + 2].position.x, in[i * 3 + 2].position.y) / in[i * 3 + 2].position.w;
-	// 	p1 = (p1 * 0.5f + 0.5f) * glm::vec2(w, h);
-	// 	p2 = (p2 * 0.5f + 0.5f) * glm::vec2(w, h);
-	// 	p3 = (p3 * 0.5f + 0.5f) * glm::vec2(w, h);
-
-	// 	glm::vec2 d12 = p1 - p2, d23 = p2 - p3, d31 = p3 - p1;
-	// 	glm::ivec2 p_min = min(min(p1, p2), p3);
-	// 	glm::ivec2 p_max = max(max(p1, p2), p3);
-	// 	float c1 = d12.y * p1.x - d12.x * p1.y;
-	// 	float c2 = d23.y * p2.x - d23.x * p2.y;
-	// 	float c3 = d31.y * p3.x - d31.x * p3.y;
-
-	// 	float cy1 = c1 + d12.x * p_min.y - d12.y * p_min.x;
-	// 	float cy2 = c2 + d23.x * p_min.y - d23.y * p_min.x;
-	// 	float cy3 = c3 + d31.x * p_min.y - d31.y * p_min.x;
-
-	// // for(int y = miny; y < maxy; y++)
-	// // {
-	// // 	// Start value for horizontal scan
-	// // 	float Cx1 = Cy1;
-	// // 	float Cx2 = Cy2;
-	// // 	float Cx3 = Cy3;
-
-	// // 	for(int x = minx; x < maxx; x++)
-	// // 	{
-	// // 		if(Cx1 > 0 && Cx2 > 0 && Cx3 > 0)
-	// // 		{
-	// // 			colorBuffer[x] = 0x00FFFFFF;<< // White
-	// // 		}
-
-	// // 		Cx1 -= Dy12;
-	// // 		Cx2 -= Dy23;
-	// // 		Cx3 -= Dy31;
-	// // 	}
-
-	// // 	Cy1 += Dx12;
-	// // 	Cy2 += Dx23;
-	// // 	Cy3 += Dx31;
-
-	// // 	(char*&)colorBuffer += stride;
-	// // }
-
-	// 	float e1 = glm::dot(d12, glm::vec2(y - p1.y, p1.x - x));
-	// 	float e2 = glm::dot(d23, glm::vec2(y - p2.y, p2.x - x));
-	// 	float e3 = glm::dot(d31, glm::vec2(y - p3.y, p3.x - x));
-
-	// 	if(e1 <= 0 && e2 <= 0 && e3 <= 0) {
-	// 		buffer[i_thread * 3 + 0] = 0;
-	// 		buffer[i_thread * 3 + 1] = 255;
-	// 		buffer[i_thread * 3 + 2] = 0;
-	// 	}
-	// }
-
-	// glm::vec2 fragCoord(x, y);
-	// glm::vec2 iResolution(w, h);
-	// glm::vec4 fragColor;
-
-	// glm::vec2 uv = fragCoord - iResolution / 2.f;
-	// float d = glm::dot(uv, uv);
-	// //float d = sqrt(dot(uv, uv));
-	// fragColor = glm::vec4(0.5f + 0.5f * cos(d / 5.f + 10.f));
-
-	// buffer[i_thread * 3 + 0] = fragColor.x * 255;
-	// buffer[i_thread * 3 + 1] = fragColor.y * 255;
-	// buffer[i_thread * 3 + 2] = fragColor.z * 255;
 }
 
 }
@@ -296,6 +220,11 @@ void CUPix::VertexData(int size, float *position, float *normal, float *uv) {
 
 void CUPix::MVP(glm::mat4 &mvp) {
 	cudaMemcpy(mvp_buf_, &mvp, sizeof(glm::mat4), cudaMemcpyHostToDevice);
+}
+
+void CUPix::Time(double time) {
+	float t = time;
+	cudaMemcpyToSymbol(cu::time, &t, sizeof(float));
 }
 
 void CUPix::Texture(unsigned char *d, int w, int h) {

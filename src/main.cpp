@@ -97,6 +97,8 @@ int main(int argc, char *argv[]) {
 		glm::mat4 mvp = p * v * m;
 		pix.MVP(mvp);
 
+		pix.Time(glfwGetTime());
+
 		pix.Draw();
 		pix.UnmapResources();
 
