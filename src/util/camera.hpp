@@ -28,6 +28,7 @@ class Camera {
 
 	bool fixed = false;
 	bool fixed_pressed = false;
+	bool print_pressed = false;
 public:
 	Camera(GLFWwindow *window, int window_w, int window_h)
 		: window_(window), window_w_(window_w), window_h_(window_h) {

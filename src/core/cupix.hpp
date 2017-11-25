@@ -7,6 +7,23 @@ namespace cupix {
 
 const double PI  = 3.14159265358979323846;
 
+enum Winding {
+	CCW,
+	CW
+};
+
+enum Face {
+	BACK,
+	FRONT,
+	FRONT_AND_BACK
+};
+
+enum Flag {
+	DEPTH_TEST,
+	BLEND,
+	CULL_FACE,
+};
+
 struct VertexIn {
 	glm::vec3 position;
 	glm::vec3 normal;
@@ -29,11 +46,7 @@ struct FragmentIn {
 };
 struct AABB {
 	glm::ivec2 v[2];
-};
-
-enum Flag {
-	DEPTH_TEST,
-	BLEND,
+	Winding winding;
 };
 
 class CUPix {
@@ -41,16 +54,23 @@ class CUPix {
 	cudaGraphicsResource *pbo_resource_;
 	unsigned char *pbo_ptr_;
 	bool record_;
+	unsigned char *frame_;
+
 	glm::vec4 clear_color_;
+	bool cull_ = false;
+	Face cull_face_ = BACK;
+	Winding front_face_ = CCW;
+
 	int n_triangle_, n_vertex_;
+	AABB *aabb_;
+
 	VertexIn *vertex_in_;
 	VertexOut *vertex_out_;
-	AABB *aabb_buf_, *aabb_;
-	glm::mat4 *mvp_buf_;
+	AABB *aabb_buf_;
 	float *frame_buf_;
 	float *depth_buf_;
 	unsigned char *texture_buf_;
-	unsigned char *frame_;
+
 public:
 	CUPix(int window_w, int window_h, unsigned int buffer, bool record);
 	~CUPix();
@@ -58,6 +78,8 @@ public:
 	void UnmapResources();
 	void Enable(Flag flag);
 	void Disable(Flag flag);
+	void CullFace(Face face);
+	void FrontFace(Winding winding);
 	void ClearColor(float r, float g, float b, float a);
 	void Clear();
 	void Draw();

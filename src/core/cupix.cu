@@ -13,15 +13,16 @@ namespace cu {
 __constant__ __device__ int w, h;
 __constant__ __device__ float time;
 texture<uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat> texture;
+__constant__ __device__ float mvp[16];
 
 __constant__ __device__ int n_triangle;
 __constant__ __device__ bool depth_test = true;
-__constant__ __device__ bool blend = true;
+__constant__ __device__ bool blend = false;
 __constant__ __device__ unsigned char clear_color[4];
+
 const int zb16_file_size = 269888;
 __constant__ __device__ unsigned char key[8] = {
-	0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01
-};
+	0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 __device__ char zb16[zb16_file_size];
 
 extern __device__
@@ -43,11 +44,11 @@ void Clear(unsigned char *frame_buf, float *depth_buf) {
 }
 
 __global__
-void NormalSpace(VertexIn *in, VertexOut *out, glm::mat4 *mvp) {
+void NormalSpace(VertexIn *in, VertexOut *out) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	if(x >= n_triangle * 3) return;
 
-	VertexShader(in[x], out[x], *mvp);
+	VertexShader(in[x], out[x], *((glm::mat4*)mvp));
 }
 
 __global__
@@ -71,12 +72,12 @@ void GetAABB(VertexOut *v, AABB *aabb) {
 	if(x >= n_triangle) return;
 
 	glm::vec2
-		p1(v[x * 3 + 0].position.x, v[x * 3 + 0].position.y),
-		p2(v[x * 3 + 1].position.x, v[x * 3 + 1].position.y),
-		p3(v[x * 3 + 2].position.x, v[x * 3 + 2].position.y);
+		p0(v[x * 3 + 0].position.x, v[x * 3 + 0].position.y),
+		p1(v[x * 3 + 1].position.x, v[x * 3 + 1].position.y),
+		p2(v[x * 3 + 2].position.x, v[x * 3 + 2].position.y);
 	glm::vec2
-		v_min = glm::min(glm::min(p1, p2), p3),
-		v_max = glm::max(glm::max(p1, p2), p3);
+		v_min = glm::min(glm::min(p0, p1), p2),
+		v_max = glm::max(glm::max(p0, p1), p2);
 	glm::ivec2
 		c0 = glm::ivec2(0, 0),
 		c1 = glm::ivec2(w - 1, h - 1),
@@ -88,6 +89,7 @@ void GetAABB(VertexOut *v, AABB *aabb) {
 
 	aabb[x].v[0] = iv_min;
 	aabb[x].v[1] = iv_max;
+	aabb[x].winding = Winding((p1.x - p0.x) * (p2.y - p1.y) - (p1.y - p0.y) * (p2.x - p1.x) < 0);
 }
 
 __device__
@@ -192,7 +194,6 @@ CUPix::CUPix(int window_w, int window_h, GLuint pbo, bool record = false)
 	frame_ = new unsigned char[window_w_ * window_h_ * 3];
 	cudaMalloc(&depth_buf_, sizeof(float) * window_w_ * window_h_);
 	cudaMalloc(&frame_buf_, sizeof(float) * window_w_ * window_h_);
-	cudaMalloc(&mvp_buf_, sizeof(glm::mat4));
 	cudaMemcpyToSymbol(cu::w, &window_w_, sizeof(int));
 	cudaMemcpyToSymbol(cu::h, &window_h_, sizeof(int));
 	cudaGraphicsGLRegisterBuffer(&pbo_resource_, pbo, cudaGraphicsMapFlagsNone);
@@ -208,7 +209,6 @@ CUPix::~CUPix() {
 	delete[] frame_;
 	cudaFree(depth_buf_);
 	cudaFree(frame_buf_);
-	cudaFree(mvp_buf_);
 	cudaGraphicsUnregisterResource(pbo_resource_);
 }
 
@@ -229,6 +229,8 @@ void CUPix::Enable(Flag flag) {
 			cudaMemcpyToSymbol(cu::depth_test, &b, 1); return;
 		case BLEND:
 			cudaMemcpyToSymbol(cu::blend, &b, 1); return;
+		case CULL_FACE:
+			cull_ = b;
 	}
 }
 
@@ -239,7 +241,17 @@ void CUPix::Disable(Flag flag) {
 			cudaMemcpyToSymbol(cu::depth_test, &b, 1); return;
 		case BLEND:
 			cudaMemcpyToSymbol(cu::blend, &b, 1); return;
+		case CULL_FACE:
+			cull_ = b; return;
 	}
+}
+
+void CUPix::CullFace(Face face) {
+	cull_face_ = face;
+}
+
+void CUPix::FrontFace(Winding winding) {
+	front_face_ = winding;
 }
 
 void CUPix::ClearColor(float r, float g, float b, float a) {
@@ -254,15 +266,18 @@ void CUPix::Clear() {
 }
 
 void CUPix::Draw() {
-	cu::NormalSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_in_, vertex_out_, mvp_buf_);
+	cu::NormalSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_in_, vertex_out_);
 	cu::WindowSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_out_);
 	cu::GetAABB<<<(n_triangle_-1)/32+1, 32>>>(vertex_out_, aabb_buf_);
 	cudaMemcpy(aabb_, aabb_buf_, sizeof(AABB) * n_triangle_, cudaMemcpyDeviceToHost);
-	for(int i = 0; i < n_triangle_; i++) {
-		glm::ivec2 dim = aabb_[i].v[1] - aabb_[i].v[0] + 1;
-		cu::Rasterize<<<dim3((dim.x-1)/4+1, (dim.y-1)/8+1), dim3(4, 8)>>>
-			(vertex_out_ + i * 3, depth_buf_, pbo_ptr_, aabb_[i].v[0], dim);
-	}
+	for(int i = 0; i < n_triangle_; i++)
+		if(!cull_ ||
+			(cull_face_ != FRONT_AND_BACK &&
+				(aabb_[i].winding == front_face_ != cull_face_))) {
+			glm::ivec2 dim = aabb_[i].v[1] - aabb_[i].v[0] + 1;
+			cu::Rasterize<<<dim3((dim.x-1)/4+1, (dim.y-1)/8+1), dim3(4, 8)>>>
+				(vertex_out_ + i * 3, depth_buf_, pbo_ptr_, aabb_[i].v[0], dim);
+		}
 	if(record_)
 		cudaMemcpy(frame_, pbo_ptr_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
 }
@@ -295,7 +310,7 @@ void CUPix::VertexData(int size, float *position, float *normal, float *uv) {
 }
 
 void CUPix::MVP(glm::mat4 &mvp) {
-	cudaMemcpy(mvp_buf_, &mvp, sizeof(glm::mat4), cudaMemcpyHostToDevice);
+	cudaMemcpyToSymbol(cu::mvp, &mvp, sizeof(glm::mat4));
 }
 
 void CUPix::Time(double time) {

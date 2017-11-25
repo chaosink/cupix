@@ -3,14 +3,15 @@
 #include "camera.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
-void PrintMat(glm::mat4 &m) {
+void PrintMat(glm::mat4 &m, const char *indent = "", const char *name = NULL) {
 	printf("\n");
-	printf("glm::mat4(\n");
-	printf("	%f, %f, %f, %f,\n", m[0][0], m[0][1], m[0][2], m[0][3]);
-	printf("	%f, %f, %f, %f,\n", m[1][0], m[1][1], m[1][2], m[1][3]);
-	printf("	%f, %f, %f, %f,\n", m[2][0], m[2][1], m[2][2], m[2][3]);
-	printf("	%f, %f, %f, %f\n",  m[3][0], m[3][1], m[3][2], m[3][3]);
-	printf(");\n");
+	if(name) printf("%s%s = ", indent, name);
+	printf(  "glm::mat4(\n");
+	printf("%s	%f, %f, %f, %f,\n", indent, m[0][0], m[0][1], m[0][2], m[0][3]);
+	printf("%s	%f, %f, %f, %f,\n", indent, m[1][0], m[1][1], m[1][2], m[1][3]);
+	printf("%s	%f, %f, %f, %f,\n", indent, m[2][0], m[2][1], m[2][2], m[2][3]);
+	printf("%s	%f, %f, %f, %f\n",  indent, m[3][0], m[3][1], m[3][2], m[3][3]);
+	printf("%s);\n", indent);
 }
 
 void Camera::Update() {
@@ -18,16 +19,23 @@ void Camera::Update() {
 		if(!fixed_pressed) {
 			fixed_pressed = true;
 			fixed = !fixed;
+			if(fixed)
+				// vp_ = glm::mat4(
+				// 	1.102078, 0.573894, 0.534812, 0.533743,
+				// 	0.000000, 2.205375, -0.407661, -0.406847,
+				// 	0.793457, -0.797114, -0.742830, -0.741346,
+				// 	-0.023755, 0.045511, 0.214560, 0.413932
+				// );
+				vp_ = glm::mat4(
+					0.964459, -1.055420, -0.552909, -0.551804,
+					0.000000, 1.892313, -0.622229, -0.620986,
+					-0.956018, -1.064739, -0.557791, -0.556676,
+					-0.014499, 0.237664, 1.606357, 1.802948
+				);
 		}
 	} else {
 		fixed_pressed = false;
 	}
-	vp_ = glm::mat4(
-		1.102078, 0.573894, 0.534812, 0.533743,
-		0.000000, 2.205375, -0.407661, -0.406847,
-		0.793457, -0.797114, -0.742830, -0.741346,
-		-0.023755, 0.045511, 0.214560, 0.413932
-	);
 	if(fixed) return;
 
 	time_new_ = glfwGetTime();
@@ -83,7 +91,14 @@ void Camera::Update() {
 		angle_horizontal_ = angle_horizontal_init_;
 		angle_vertical_ = angle_vertical_init_;
 	}
-
+	if(glfwGetKey(window_, GLFW_KEY_P) == GLFW_PRESS) {
+		if(!print_pressed) {
+			print_pressed = true;
+			PrintMat(vp_, "\t\t\t\t", "vp_");
+		}
+	} else {
+		print_pressed = false;
+	}
 	// Camera matrix
 	v_ = glm::lookAt(
 			position_,             // Camera is here
@@ -92,7 +107,6 @@ void Camera::Update() {
 	// Projection matrix: 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 	p_ = glm::perspective(fov_, float(window_w_) / window_h_, 0.1f, 100.f);
 	vp_ = p_ * v_;
-	// PrintMat(vp_);
 
 	time_old_ = time_new_;
 	x_old_ = x;
