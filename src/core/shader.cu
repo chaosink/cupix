@@ -35,5 +35,3 @@ void FragmentShader(FragmentIn &in, glm::vec4 &color) {
 
 }
 }
-
-

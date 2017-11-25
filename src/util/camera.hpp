@@ -20,8 +20,8 @@ class Camera {
 	float angle_vertical_ = angle_vertical_init_;
 
 	float fov_ = PI / 4.f;
-	float speed_ = 2.0f;
-	float mouse_speed_ = 0.002f;
+	float speed_ = 1.0f;
+	float mouse_speed_ = 0.001f;
 
 	double time_old_ = glfwGetTime(), time_new_;
 	double x_old_, y_old_;

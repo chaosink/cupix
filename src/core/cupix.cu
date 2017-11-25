@@ -16,6 +16,11 @@ texture<uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat> texture;
 
 __constant__ __device__ int n_triangle;
 __constant__ __device__ unsigned char clear_color[4];
+const int zb16_file_size = 269888;
+__constant__ __device__ unsigned char key[8] = {
+	0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01
+};
+__device__ char zb16[zb16_file_size];
 
 extern __device__
 void VertexShader(VertexIn &in, VertexOut &out, glm::mat4 &mvp);
@@ -149,6 +154,20 @@ void Rasterize(VertexOut *v, float *depth_buf, unsigned char* frame_buf, glm::iv
 	}
 }
 
+__global__
+void Font(int ch, int x0, int y0, unsigned char *frame_buf) {
+	int x = threadIdx.x + blockIdx.x * blockDim.x;
+	int y = threadIdx.y + blockIdx.y * blockDim.y;
+	int i_pixel = w * (y + y0) + x + x0;
+
+	int offset = (ch + 155) * 32 + 0x2000;
+	char c = zb16[offset + (16 - y) * 2 + x / 8];
+	if(!(c & key[(x % 8)])) return;
+	frame_buf[i_pixel * 3 + 0] = 255 - clear_color[0];
+	frame_buf[i_pixel * 3 + 1] = 255 - clear_color[1];
+	frame_buf[i_pixel * 3 + 2] = 255 - clear_color[2];
+}
+
 }
 
 
@@ -162,6 +181,12 @@ CUPix::CUPix(int window_w, int window_h, GLuint pbo, bool record = false)
 	cudaMemcpyToSymbol(cu::w, &window_w_, sizeof(int));
 	cudaMemcpyToSymbol(cu::h, &window_h_, sizeof(int));
 	cudaGraphicsGLRegisterBuffer(&pbo_resource_, pbo, cudaGraphicsMapFlagsNone);
+
+	FILE *zb16_file = fopen("../font/zb16.data", "rb");
+	char zb16[cu::zb16_file_size];
+	size_t r = fread(zb16, 1, cu::zb16_file_size, zb16_file);
+	fclose(zb16_file);
+	cudaMemcpyToSymbol(cu::zb16, zb16, cu::zb16_file_size);
 }
 
 CUPix::~CUPix() {
@@ -207,6 +232,15 @@ void CUPix::Draw() {
 		cudaMemcpy(frame_, pbo_ptr_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
 }
 
+void CUPix::DrawFPS(int fps) {
+	cu::Font<<<1, dim3(16, 16)>>>('F',  0, 0, pbo_ptr_);
+	cu::Font<<<1, dim3(16, 16)>>>('P', 16, 0, pbo_ptr_);
+	cu::Font<<<1, dim3(16, 16)>>>('S', 32 - 3, 0, pbo_ptr_);
+	cu::Font<<<1, dim3(16, 16)>>>(fps % 1000 / 100 + 48, 48 + 5, 0, pbo_ptr_);
+	cu::Font<<<1, dim3(16, 16)>>>(fps % 100 / 10   + 48, 64 + 5, 0, pbo_ptr_);
+	cu::Font<<<1, dim3(16, 16)>>>(fps % 10         + 48, 80 + 5, 0, pbo_ptr_);
+}
+
 void CUPix::VertexData(int size, float *position, float *normal, float *uv) {
 	n_vertex_ = size;
 	n_triangle_ = n_vertex_ / 3;
@@ -234,7 +268,7 @@ void CUPix::Time(double time) {
 	cudaMemcpyToSymbol(cu::time, &t, sizeof(float));
 }
 
-void CUPix::Texture(unsigned char *d, int w, int h) {
+void CUPix::Texture(unsigned char *d, int w, int h, bool gamma_correction) {
 	unsigned char data[w * h * 4];
 	for(int i = 0; i < w * h; i++) {
 		data[i * 4 + 0] = d[i * 3 + 0];
@@ -251,7 +285,7 @@ void CUPix::Texture(unsigned char *d, int w, int h) {
 		cudaMemcpyHostToDevice);
 
 	cu::texture.normalized = true;
-	cu::texture.sRGB = true;
+	cu::texture.sRGB = gamma_correction;
 	cu::texture.filterMode = cudaFilterModeLinear;
 	cu::texture.addressMode[0] = cudaAddressModeWrap;
 	cu::texture.addressMode[1] = cudaAddressModeWrap;

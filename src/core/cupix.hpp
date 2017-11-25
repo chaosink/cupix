@@ -54,10 +54,11 @@ public:
 	void ClearColor(float r, float g, float b, float a);
 	void Clear();
 	void Draw();
+	void DrawFPS(int fps);
 	void VertexData(int size, float *position, float *normal, float *uv);
 	void MVP(glm::mat4 &mvp);
 	void Time(double time);
-	void Texture(unsigned char *data, int w, int h);
+	void Texture(unsigned char *data, int w, int h, bool gamma_correction);
 	unsigned char* frame() {
 		return frame_;
 	}

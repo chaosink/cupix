@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
 	pix.VertexData(model.n_vertex(), model.vertex(), model.normal(), model.uv());
 
 	Texture texture("../texture/uv.png");
-	pix.Texture(texture.data(), texture.w(), texture.h());
+	pix.Texture(texture.data(), texture.w(), texture.h(), false); // gamma_correction = false
 
 	Camera camera(window, window_w, window_h);
 	FPS fps;
@@ -103,6 +103,7 @@ int main(int argc, char *argv[]) {
 
 		pix.Time(glfwGetTime());
 		pix.Draw();
+		pix.DrawFPS(fps.fps());
 		pix.UnmapResources();
 
 		UpdateGL(window, window_w, window_h);
