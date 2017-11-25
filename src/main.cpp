@@ -13,12 +13,7 @@ using namespace std;
 
 using namespace cupix;
 
-void GLFWErrorCallback(int error, const char* description) {
-	fprintf(stderr, "Error: %s\n", description);
-}
-
 GLFWwindow* InitGLFW(int window_w, int window_H) {
-	glfwSetErrorCallback(GLFWErrorCallback);
 	if(!glfwInit()) exit(EXIT_FAILURE);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);

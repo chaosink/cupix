@@ -57,7 +57,7 @@ class CUPix {
 	unsigned char *frame_;
 
 	glm::vec4 clear_color_;
-	bool cull_ = false;
+	bool cull_ = true;
 	Face cull_face_ = BACK;
 	Winding front_face_ = CCW;
 

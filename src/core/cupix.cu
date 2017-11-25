@@ -93,7 +93,7 @@ void GetAABB(VertexOut *v, AABB *aabb) {
 }
 
 __device__
-void Interpolate(VertexOut *v, FragmentIn *f, glm::vec3 e) {
+void Interpolate(VertexOut *v, FragmentIn *f, glm::vec3 &e) {
 	glm::vec3 d(
 		e.x / v[0].position.w,
 		e.y / v[1].position.w,
@@ -143,8 +143,8 @@ void Rasterize(VertexOut *v, float *depth_buf, unsigned char* frame_buf, glm::iv
 	if(e0 >= 0 && e1 >= 0 && e2 >= 0
 	|| e0 <= 0 && e1 <= 0 && e2 <= 0) {
 		FragmentIn fragment = {glm::ivec2(x, y)};
-		float e = e0 + e1 + e2;
-		Interpolate(v, &fragment, glm::vec3(e0, e1, e2) / e);
+		glm::vec3 e = glm::vec3(e0, e1, e2) / (e0 + e1 + e2);
+		Interpolate(v, &fragment, e);
 		if(fragment.z > 1 || fragment.z < -1) return;
 		if(!depth_test || 1 - fragment.z > depth_buf[i_thread]) {
 			depth_buf[i_thread] = 1 - fragment.z;
