@@ -31,6 +31,11 @@ struct AABB {
 	glm::ivec2 v[2];
 };
 
+enum Flag {
+	DEPTH_TEST,
+	BLEND,
+};
+
 class CUPix {
 	int window_w_, window_h_;
 	cudaGraphicsResource *pbo_resource_;
@@ -51,6 +56,8 @@ public:
 	~CUPix();
 	void MapResources();
 	void UnmapResources();
+	void Enable(Flag flag);
+	void Disable(Flag flag);
 	void ClearColor(float r, float g, float b, float a);
 	void Clear();
 	void Draw();

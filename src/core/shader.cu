@@ -19,7 +19,7 @@ void VertexShader(VertexIn &in, VertexOut &out, glm::mat4 &mvp) {
 __device__
 void FragmentShader(FragmentIn &in, glm::vec4 &color) {
 	// glm::vec4 c = glm::vec4(in.normal, 0.f);
-	glm::vec4 c = glm::vec4(in.normal * 0.5f + 0.5f, 0.f);
+	glm::vec4 c = glm::vec4(in.normal * 0.5f + 0.5f, 0.5f);
 	// glm::vec4 c = glm::vec4(in.uv, 0.f, 0.f);
 	// float4 c = tex2D(texture, in.uv.s, 1 - in.uv.t);
 

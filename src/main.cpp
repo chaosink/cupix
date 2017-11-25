@@ -96,9 +96,8 @@ int main(int argc, char *argv[]) {
 		pix.Clear();
 
 		glm::mat4 m;
-		glm::mat4 v = camera.v();
-		glm::mat4 p = camera.p();
-		glm::mat4 mvp = p * v * m;
+		glm::mat4 vp = camera.vp();
+		glm::mat4 mvp = vp * m;
 		pix.MVP(mvp);
 
 		pix.Time(glfwGetTime());

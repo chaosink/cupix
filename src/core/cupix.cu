@@ -15,6 +15,8 @@ __constant__ __device__ float time;
 texture<uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat> texture;
 
 __constant__ __device__ int n_triangle;
+__constant__ __device__ bool depth_test = true;
+__constant__ __device__ bool blend = true;
 __constant__ __device__ unsigned char clear_color[4];
 const int zb16_file_size = 269888;
 __constant__ __device__ unsigned char key[8] = {
@@ -136,16 +138,29 @@ void Rasterize(VertexOut *v, float *depth_buf, unsigned char* frame_buf, glm::iv
 	float e1 = glm::dot(d20, glm::vec2(y + 0.5f - p2.y, p2.x - x - 0.5f));
 	float e2 = glm::dot(d01, glm::vec2(y + 0.5f - p0.y, p0.x - x - 0.5f));
 
-	if(e0 >= 0 && e1 >= 0 && e2 >= 0) {
+	if(e0 >= 0 && e1 >= 0 && e2 >= 0
+	|| e0 <= 0 && e1 <= 0 && e2 <= 0) {
 		FragmentIn fragment = {glm::ivec2(x, y)};
 		float e = e0 + e1 + e2;
 		Interpolate(v, &fragment, glm::vec3(e0, e1, e2) / e);
 		if(fragment.z > 1 || fragment.z < -1) return;
-		if(1 - fragment.z > depth_buf[i_thread]) {
+		if(!depth_test || 1 - fragment.z > depth_buf[i_thread]) {
 			depth_buf[i_thread] = 1 - fragment.z;
 			glm::vec4 color;
 			FragmentShader(fragment, color);
-			glm::ivec4 icolor = color * 255.f;
+			glm::ivec4 icolor;
+			if(blend) {
+				float alpha = color.a;
+				glm::vec4 color_old = glm::vec4(
+					frame_buf[i_thread * 3 + 0],
+					frame_buf[i_thread * 3 + 1],
+					frame_buf[i_thread * 3 + 2],
+					0.0f
+				);
+				icolor = color * 255.f * alpha + color_old * (1.f - alpha);
+			} else {
+				icolor = color * 255.f;
+			}
 			icolor = glm::clamp(icolor, glm::ivec4(0), glm::ivec4(255));
 			frame_buf[i_thread * 3 + 0] = icolor.r;
 			frame_buf[i_thread * 3 + 1] = icolor.g;
@@ -205,6 +220,26 @@ void CUPix::MapResources() {
 
 void CUPix::UnmapResources() {
 	cudaGraphicsUnmapResources(1, &pbo_resource_, NULL);
+}
+
+void CUPix::Enable(Flag flag) {
+	bool b = true;
+	switch(flag) {
+		case DEPTH_TEST:
+			cudaMemcpyToSymbol(cu::depth_test, &b, 1); return;
+		case BLEND:
+			cudaMemcpyToSymbol(cu::blend, &b, 1); return;
+	}
+}
+
+void CUPix::Disable(Flag flag) {
+	bool b = false;
+	switch(flag) {
+		case DEPTH_TEST:
+			cudaMemcpyToSymbol(cu::depth_test, &b, 1); return;
+		case BLEND:
+			cudaMemcpyToSymbol(cu::blend, &b, 1); return;
+	}
 }
 
 void CUPix::ClearColor(float r, float g, float b, float a) {
