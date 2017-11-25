@@ -108,12 +108,12 @@ int main(int argc, char *argv[]) {
 		UpdateGL(window, window_w, window_h);
 		camera.Update();
 		fps.Update();
-		video.Add(pix.frame());
+		if(record) video.Add(pix.frame());
 	}
 	fps.Term();
 
 	TermGL(pbo);
 	TermGLFW(window);
 
-	video.Save(argv[2]);
+	if(record) video.Save(argv[2]);
 }
