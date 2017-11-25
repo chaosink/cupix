@@ -133,14 +133,13 @@ void Rasterize(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, floa
 	if(x >= w || y >= h) return;
 	int i_thread = y * w + x;
 
-	// if(v[0].position.z >  1 || v[1].position.z >  1 || v[2].position.z >  1
-	// || v[0].position.z < -1 || v[1].position.z < -1 || v[2].position.z < -1)
-	// 	return;
+	if(v[0].position.z > 1 && v[1].position.z > 1 && v[2].position.z > 1
+	|| v[0].position.z <-1 && v[1].position.z <-1 && v[2].position.z <-1)
+		return;
 	glm::vec2
 		p0 = glm::vec2(v[0].position.x, v[0].position.y),
 		p1 = glm::vec2(v[1].position.x, v[1].position.y),
 		p2 = glm::vec2(v[2].position.x, v[2].position.y);
-
 	glm::vec2 d01 = p1 - p0, d12 = p2 - p1, d20 = p0 - p2;
 	float e0 = glm::dot(d12, glm::vec2(y + 0.5f - p1.y, p1.x - x - 0.5f));
 	float e1 = glm::dot(d20, glm::vec2(y + 0.5f - p2.y, p2.x - x - 0.5f));
@@ -221,7 +220,8 @@ CUPix::~CUPix() {
 void CUPix::MapResources() {
 	size_t size;
 	cudaGraphicsMapResources(1, &pbo_resource_, NULL);
-	cudaGraphicsResourceGetMappedPointer((void**)&pbo_ptr_, &size, pbo_resource_);
+	cudaGraphicsResourceGetMappedPointer((void**)&pbo_buf_, &size, pbo_resource_);
+	frame_buf_ = pbo_buf_;
 }
 
 void CUPix::UnmapResources() {
@@ -268,7 +268,7 @@ void CUPix::ClearColor(float r, float g, float b, float a) {
 }
 
 void CUPix::Clear() {
-	cu::Clear<<<dim3((window_w_-1)/32+1, (window_h_-1)/32+1), dim3(32, 32)>>>(pbo_ptr_, depth_buf_);
+	cu::Clear<<<dim3((window_w_-1)/32+1, (window_h_-1)/32+1), dim3(32, 32)>>>(frame_buf_, depth_buf_);
 }
 
 void CUPix::Draw() {
@@ -281,19 +281,19 @@ void CUPix::Draw() {
 		&& (aabb_[i].winding == front_face_ != cull_face_))) {
 			glm::ivec2 dim = aabb_[i].v[1] - aabb_[i].v[0] + 1;
 			cu::Rasterize<<<dim3((dim.x-1)/4+1, (dim.y-1)/8+1), dim3(4, 8)>>>
-				(aabb_[i].v[0], dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, pbo_ptr_);
+				(aabb_[i].v[0], dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, frame_buf_);
 		}
 	if(record_)
-		cudaMemcpy(frame_, pbo_ptr_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
+		cudaMemcpy(frame_, frame_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
 }
 
 void CUPix::DrawFPS(int fps) {
-	cu::Font<<<1, dim3(16, 16)>>>('F',  0, 0, pbo_ptr_);
-	cu::Font<<<1, dim3(16, 16)>>>('P', 16, 0, pbo_ptr_);
-	cu::Font<<<1, dim3(16, 16)>>>('S', 32 - 3, 0, pbo_ptr_);
-	cu::Font<<<1, dim3(16, 16)>>>(fps % 1000 / 100 + 48, 48 + 5, 0, pbo_ptr_);
-	cu::Font<<<1, dim3(16, 16)>>>(fps % 100 / 10   + 48, 64 + 5, 0, pbo_ptr_);
-	cu::Font<<<1, dim3(16, 16)>>>(fps % 10         + 48, 80 + 5, 0, pbo_ptr_);
+	cu::Font<<<1, dim3(16, 16)>>>('F',  0, 0, frame_buf_);
+	cu::Font<<<1, dim3(16, 16)>>>('P', 16, 0, frame_buf_);
+	cu::Font<<<1, dim3(16, 16)>>>('S', 32 - 3, 0, frame_buf_);
+	cu::Font<<<1, dim3(16, 16)>>>(fps % 1000 / 100 + 48, 48 + 5, 0, frame_buf_);
+	cu::Font<<<1, dim3(16, 16)>>>(fps % 100 / 10   + 48, 64 + 5, 0, frame_buf_);
+	cu::Font<<<1, dim3(16, 16)>>>(fps % 10         + 48, 80 + 5, 0, frame_buf_);
 }
 
 void CUPix::VertexData(int size, float *position, float *normal, float *uv) {

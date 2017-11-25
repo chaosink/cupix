@@ -52,11 +52,15 @@ struct AABB {
 	glm::ivec2 v[2];
 	Winding winding;
 };
+struct Light {
+	glm::ivec3 position;
+	float emission;
+};
 
 class CUPix {
 	int window_w_, window_h_;
 	cudaGraphicsResource *pbo_resource_;
-	unsigned char *pbo_ptr_;
+	unsigned char *pbo_buf_;
 	bool record_;
 	unsigned char *frame_;
 
@@ -72,7 +76,7 @@ class CUPix {
 	VertexOut *vertex_out_;
 	Vertex *vertex_buf_;
 	AABB *aabb_buf_;
-	// float *frame_buf_;
+	unsigned char *frame_buf_;
 	float *depth_buf_;
 	unsigned char *texture_buf_;
 
