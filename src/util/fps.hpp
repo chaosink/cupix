@@ -22,6 +22,6 @@ public:
 		printf("\n");
 	}
 	int fps() {
-		return fps_;
+		return fps_ + 0.5f;
 	}
 };

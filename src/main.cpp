@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
 	// pix.CullFace(BACK);
 	// pix.FrontFace(CW);
 
-	glm::vec4 light(5.f, 5.f, 5.f, 10.f);
+	glm::vec4 light(3.f, 4.f, 5.f, 1.f);
 	pix.Light(light);
 
 	Model model(argv[1]);

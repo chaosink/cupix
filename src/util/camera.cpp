@@ -8,9 +8,10 @@ static void ScrollCallback(GLFWwindow* window, double x, double y) {
 	scoll = y;
 }
 
-void PrintMat(glm::mat4 &m, const char *indent = "", const char *name = NULL) {
+void PrintMat(glm::mat4 &m, const char *indent, const char *name) {
 	printf("\n");
-	if(name) printf("%s%s = ", indent, name);
+	printf("%s", indent);
+	if(name) printf("%s = ", name);
 	printf(  "glm::mat4(\n");
 	printf("%s	%f, %f, %f, %f,\n", indent, m[0][0], m[0][1], m[0][2], m[0][3]);
 	printf("%s	%f, %f, %f, %f,\n", indent, m[1][0], m[1][1], m[1][2], m[1][3]);
@@ -19,12 +20,21 @@ void PrintMat(glm::mat4 &m, const char *indent = "", const char *name = NULL) {
 	printf("%s);\n", indent);
 }
 
+void PrintVec(glm::vec3 &v, const char *indent, const char *name) {
+	printf("\n");
+	printf("%s", indent);
+	if(name) printf("%s = ", name);
+	printf("glm::vec3(%f, %f, %f);\n", v.x, v.y, v.z);
+}
+
 Camera::Camera(GLFWwindow *window, int window_w, int window_h)
 	: window_(window), window_w_(window_w), window_h_(window_h) {
 	glfwSetScrollCallback(window, ScrollCallback);
 	glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwGetCursorPos(window_, &x_old_, &y_old_);
 	Update();
+	glm::vec3 v(1, 2, 3);
+	PrintVec(v);
 }
 
 void Camera::Update() {
@@ -33,24 +43,12 @@ void Camera::Update() {
 			fixed_pressed = true;
 			fixed = !fixed;
 			if(fixed)
-				// vp_ = glm::mat4(
-				// 	1.102078, 0.573894, 0.534812, 0.533743,
-				// 	0.000000, 2.205375, -0.407661, -0.406847,
-				// 	0.793457, -0.797114, -0.742830, -0.741346,
-				// 	-0.023755, 0.045511, 0.214560, 0.413932
-				// );
-				vp_ = glm::mat4(
-					0.964459, -1.055420, -0.552909, -0.551804,
-					0.000000, 1.892313, -0.622229, -0.620986,
-					-0.956018, -1.064739, -0.557791, -0.556676,
-					-0.014499, 0.237664, 1.606357, 1.802948
+				vp_ = glm::mat4( // ancient door
+					1.036194, 0.564289, 0.603825, 0.602619,
+					-0.000001, 2.250835, -0.362342, -0.361618,
+					0.877755, -0.666144, -0.712819, -0.711395,
+					2.318171, -42.061245, 84.176903, 84.208519
 				);
-				// vp_ = glm::mat4(
-				// 	1.304048, 0.505253, 0.184963, 0.184593,
-				// 	-0.000000, 1.596964, -0.751460, -0.749959,
-				// 	0.378961, -1.738635, -0.636478, -0.635206,
-				// 	0.009863, 0.063004, 4.698840, 4.889251
-				// );
 		}
 	} else {
 		fixed_pressed = false;
