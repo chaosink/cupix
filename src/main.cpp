@@ -81,6 +81,9 @@ int main(int argc, char *argv[]) {
 
 	CUPix pix(window_w, window_h, pbo, record);
 	pix.ClearColor(0.08f, 0.16f, 0.24f, 1.f);
+	// pix.Enable(CULL_FACE);
+	// pix.CullFace(BACK);
+	// pix.FrontFace(CW);
 
 	Model model(argv[1]);
 	pix.VertexData(model.n_vertex(), model.vertex(), model.normal(), model.uv());

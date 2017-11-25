@@ -3,6 +3,11 @@
 #include "camera.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
+static double scoll = 0;
+static void ScrollCallback(GLFWwindow* window, double x, double y) {
+	scoll = y;
+}
+
 void PrintMat(glm::mat4 &m, const char *indent = "", const char *name = NULL) {
 	printf("\n");
 	if(name) printf("%s%s = ", indent, name);
@@ -12,6 +17,14 @@ void PrintMat(glm::mat4 &m, const char *indent = "", const char *name = NULL) {
 	printf("%s	%f, %f, %f, %f,\n", indent, m[2][0], m[2][1], m[2][2], m[2][3]);
 	printf("%s	%f, %f, %f, %f\n",  indent, m[3][0], m[3][1], m[3][2], m[3][3]);
 	printf("%s);\n", indent);
+}
+
+Camera::Camera(GLFWwindow *window, int window_w, int window_h)
+	: window_(window), window_w_(window_w), window_h_(window_h) {
+	glfwSetScrollCallback(window, ScrollCallback);
+	glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwGetCursorPos(window_, &x_old_, &y_old_);
+	Update();
 }
 
 void Camera::Update() {
@@ -90,6 +103,7 @@ void Camera::Update() {
 		position_ = position_init_;
 		angle_horizontal_ = angle_horizontal_init_;
 		angle_vertical_ = angle_vertical_init_;
+		fov_ = fov_init_;
 	}
 	if(glfwGetKey(window_, GLFW_KEY_P) == GLFW_PRESS) {
 		if(!print_pressed) {
@@ -99,6 +113,9 @@ void Camera::Update() {
 	} else {
 		print_pressed = false;
 	}
+
+	fov_ += scoll * time * scroll_speed_;
+	scoll = 0;
 	// Camera matrix
 	v_ = glm::lookAt(
 			position_,             // Camera is here
