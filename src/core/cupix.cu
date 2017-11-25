@@ -26,7 +26,7 @@ __constant__ __device__ unsigned char key[8] = {
 __device__ char zb16[zb16_file_size];
 
 extern __device__
-void VertexShader(VertexIn &in, VertexOut &out, glm::mat4 &mvp);
+void VertexShader(VertexIn &in, glm::mat4 &mvp, VertexOut &out, Vertex &v);
 
 extern __device__
 void FragmentShader(FragmentIn &in, glm::vec4 &color);
@@ -44,15 +44,15 @@ void Clear(unsigned char *frame_buf, float *depth_buf) {
 }
 
 __global__
-void NormalSpace(VertexIn *in, VertexOut *out) {
+void NormalSpace(VertexIn *in, VertexOut *out, Vertex *v) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	if(x >= n_triangle * 3) return;
 
-	VertexShader(in[x], out[x], *((glm::mat4*)mvp));
+	VertexShader(in[x], *((glm::mat4*)mvp), out[x], v[x]);
 }
 
 __global__
-void WindowSpace(VertexOut *v) {
+void WindowSpace(Vertex *v) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	if(x >= n_triangle * 3) return;
 
@@ -67,7 +67,7 @@ void WindowSpace(VertexOut *v) {
 }
 
 __global__
-void GetAABB(VertexOut *v, AABB *aabb) {
+void GetAABB(Vertex *v, AABB *aabb) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	if(x >= n_triangle) return;
 
@@ -93,24 +93,30 @@ void GetAABB(VertexOut *v, AABB *aabb) {
 }
 
 __device__
-void Interpolate(VertexOut *v, FragmentIn *f, glm::vec3 &e) {
-	glm::vec3 d(
+void Interpolate(Vertex *v, VertexOut *va, glm::vec3 &e, FragmentIn *f) { // va: vertex attibute
+	glm::vec3 we(
 		e.x / v[0].position.w,
 		e.y / v[1].position.w,
 		e.z / v[2].position.w);
-	f->depth = 1 / (d.x + d.y + d.z);
+	float w = 1.f / (we.x + we.y + we.z);
+
+	f->position = (
+		va[0].position * we.x +
+		va[1].position * we.y +
+		va[2].position * we.z) * w;
 	f->normal = (
-		v[0].normal * d.x +
-		v[1].normal * d.y +
-		v[2].normal * d.z) * f->depth;
+		va[0].normal * we.x +
+		va[1].normal * we.y +
+		va[2].normal * we.z) * w;
 	f->color = (
-		v[0].color * d.x +
-		v[1].color * d.y +
-		v[2].color * d.z) * f->depth;
+		va[0].color * we.x +
+		va[1].color * we.y +
+		va[2].color * we.z) * w;
 	f->uv = (
-		v[0].uv * d.x +
-		v[1].uv * d.y +
-		v[2].uv * d.z) * f->depth;
+		va[0].uv * we.x +
+		va[1].uv * we.y +
+		va[2].uv * we.z) * w;
+
 	f->z =
 		e.x * v[0].position.z +
 		e.y * v[1].position.z +
@@ -118,7 +124,7 @@ void Interpolate(VertexOut *v, FragmentIn *f, glm::vec3 &e) {
 }
 
 __global__
-void Rasterize(VertexOut *v, float *depth_buf, unsigned char* frame_buf, glm::ivec2 corner, glm::ivec2 dim) {
+void Rasterize(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, float *depth_buf, unsigned char* frame_buf) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	int y = threadIdx.y + blockIdx.y * blockDim.y;
 	if(x >= dim.x || y >= dim.y) return;
@@ -144,7 +150,7 @@ void Rasterize(VertexOut *v, float *depth_buf, unsigned char* frame_buf, glm::iv
 	|| e0 <= 0 && e1 <= 0 && e2 <= 0) {
 		FragmentIn fragment = {glm::ivec2(x, y)};
 		glm::vec3 e = glm::vec3(e0, e1, e2) / (e0 + e1 + e2);
-		Interpolate(v, &fragment, e);
+		Interpolate(v, va, e, &fragment);
 		if(fragment.z > 1 || fragment.z < -1) return;
 		if(!depth_test || 1 - fragment.z > depth_buf[i_thread]) {
 			depth_buf[i_thread] = 1 - fragment.z;
@@ -193,7 +199,7 @@ CUPix::CUPix(int window_w, int window_h, GLuint pbo, bool record = false)
 	: window_w_(window_w), window_h_(window_h), record_(record) {
 	frame_ = new unsigned char[window_w_ * window_h_ * 3];
 	cudaMalloc(&depth_buf_, sizeof(float) * window_w_ * window_h_);
-	cudaMalloc(&frame_buf_, sizeof(float) * window_w_ * window_h_);
+	// cudaMalloc(&frame_buf_, sizeof(float) * window_w_ * window_h_);
 	cudaMemcpyToSymbol(cu::w, &window_w_, sizeof(int));
 	cudaMemcpyToSymbol(cu::h, &window_h_, sizeof(int));
 	cudaGraphicsGLRegisterBuffer(&pbo_resource_, pbo, cudaGraphicsMapFlagsNone);
@@ -208,7 +214,7 @@ CUPix::CUPix(int window_w, int window_h, GLuint pbo, bool record = false)
 CUPix::~CUPix() {
 	delete[] frame_;
 	cudaFree(depth_buf_);
-	cudaFree(frame_buf_);
+	// cudaFree(frame_buf_);
 	cudaGraphicsUnregisterResource(pbo_resource_);
 }
 
@@ -266,17 +272,16 @@ void CUPix::Clear() {
 }
 
 void CUPix::Draw() {
-	cu::NormalSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_in_, vertex_out_);
-	cu::WindowSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_out_);
-	cu::GetAABB<<<(n_triangle_-1)/32+1, 32>>>(vertex_out_, aabb_buf_);
+	cu::NormalSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_in_, vertex_out_, vertex_buf_);
+	cu::WindowSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_buf_);
+	cu::GetAABB<<<(n_triangle_-1)/32+1, 32>>>(vertex_buf_, aabb_buf_);
 	cudaMemcpy(aabb_, aabb_buf_, sizeof(AABB) * n_triangle_, cudaMemcpyDeviceToHost);
 	for(int i = 0; i < n_triangle_; i++)
-		if(!cull_ ||
-			(cull_face_ != FRONT_AND_BACK &&
-				(aabb_[i].winding == front_face_ != cull_face_))) {
+		if(!cull_ || (cull_face_ != FRONT_AND_BACK
+		&& (aabb_[i].winding == front_face_ != cull_face_))) {
 			glm::ivec2 dim = aabb_[i].v[1] - aabb_[i].v[0] + 1;
 			cu::Rasterize<<<dim3((dim.x-1)/4+1, (dim.y-1)/8+1), dim3(4, 8)>>>
-				(vertex_out_ + i * 3, depth_buf_, pbo_ptr_, aabb_[i].v[0], dim);
+				(aabb_[i].v[0], dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, pbo_ptr_);
 		}
 	if(record_)
 		cudaMemcpy(frame_, pbo_ptr_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
@@ -303,6 +308,7 @@ void CUPix::VertexData(int size, float *position, float *normal, float *uv) {
 	}
 	cudaMalloc(&vertex_in_, sizeof(v));
 	cudaMemcpy(vertex_in_, v, sizeof(v), cudaMemcpyHostToDevice);
+	cudaMalloc(&vertex_buf_, sizeof(Vertex) * n_vertex_);
 	cudaMalloc(&aabb_buf_, sizeof(AABB) * n_triangle_);
 	aabb_ = new AABB[n_triangle_];
 	cudaMalloc(&vertex_out_, sizeof(VertexOut) * n_vertex_);

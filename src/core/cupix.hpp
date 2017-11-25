@@ -24,6 +24,9 @@ enum Flag {
 	CULL_FACE,
 };
 
+struct Vertex {
+	glm::vec4 position;
+};
 struct VertexIn {
 	glm::vec3 position;
 	glm::vec3 normal;
@@ -31,15 +34,16 @@ struct VertexIn {
 	glm::vec2 uv;
 };
 struct VertexOut {
-	glm::vec4 position;
+	glm::vec3 position;
 	glm::vec3 normal;
 	glm::vec3 color;
 	glm::vec2 uv;
 };
 struct FragmentIn {
-	glm::ivec2 position;
+	glm::ivec2 coord;
 	float z;
-	float depth;
+
+	glm::vec3 position;
 	glm::vec3 normal;
 	glm::vec3 color;
 	glm::vec2 uv;
@@ -66,8 +70,9 @@ class CUPix {
 
 	VertexIn *vertex_in_;
 	VertexOut *vertex_out_;
+	Vertex *vertex_buf_;
 	AABB *aabb_buf_;
-	float *frame_buf_;
+	// float *frame_buf_;
 	float *depth_buf_;
 	unsigned char *texture_buf_;
 

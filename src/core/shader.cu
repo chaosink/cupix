@@ -9,8 +9,10 @@ extern __constant__ __device__ float time;
 extern texture<uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat> texture;
 
 __device__
-void VertexShader(VertexIn &in, VertexOut &out, glm::mat4 &mvp) {
-	out.position = mvp * glm::vec4(in.position, 1.f);
+void VertexShader(VertexIn &in, glm::mat4 &mvp, VertexOut &out, Vertex &v) {
+	v.position = mvp * glm::vec4(in.position, 1.f);
+
+	out.position = in.position;
 	out.normal = in.normal;
 	out.color = in.color;
 	out.uv = in.uv;
@@ -23,7 +25,7 @@ void FragmentShader(FragmentIn &in, glm::vec4 &color) {
 	// glm::vec4 c = glm::vec4(in.uv, 0.f, 0.f);
 	// float4 c = tex2D(texture, in.uv.s, 1 - in.uv.t);
 
-	// glm::vec2 fragCoord(in.position.x, in.position.y);
+	// glm::vec2 fragCoord(in.coord.x, in.coord.y);
 	// glm::vec2 iResolution(w, h);
 	// glm::vec2 uv = fragCoord - iResolution / 2.f;
 	// float d = glm::dot(uv, uv);
