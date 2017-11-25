@@ -1,24 +1,25 @@
 #pragma once
 
 #include <cuda_runtime.h>
+#define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 
 namespace cupix {
 
 const double PI  = 3.14159265358979323846;
 
-enum Winding {
+enum Winding : unsigned char {
 	CCW,
 	CW
 };
 
-enum Face {
+enum Face : unsigned char {
 	BACK,
 	FRONT,
 	FRONT_AND_BACK
 };
 
-enum Flag {
+enum Flag : unsigned char {
 	DEPTH_TEST,
 	BLEND,
 	CULL_FACE,
@@ -52,10 +53,6 @@ struct Triangle {
 	glm::ivec2 v[2];
 	Winding winding;
 	bool empty;
-};
-struct Light {
-	glm::ivec3 position;
-	float emission;
 };
 
 class CUPix {
@@ -96,8 +93,10 @@ public:
 	void DrawFPS(int fps);
 	void VertexData(int size, float *position, float *normal, float *uv);
 	void MVP(glm::mat4 &mvp);
+	void MV(glm::mat4 &mv);
 	void Time(double time);
 	void Texture(unsigned char *data, int w, int h, bool gamma_correction);
+	void Light(glm::vec4 &light);
 	unsigned char* frame() {
 		return frame_;
 	}

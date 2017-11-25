@@ -14,6 +14,8 @@ __constant__ __device__ int w, h;
 __constant__ __device__ float time;
 texture<uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat> texture;
 __constant__ __device__ float mvp[16];
+__constant__ __device__ float mv[16];
+__constant__ __device__ float light[4];
 
 __constant__ __device__ int n_triangle;
 __constant__ __device__ bool depth_test = true;
@@ -26,7 +28,7 @@ __constant__ __device__ unsigned char key[8] = {
 __device__ char zb16[zb16_file_size];
 
 extern __device__
-void VertexShader(VertexIn &in, glm::mat4 &mvp, VertexOut &out, Vertex &v);
+void VertexShader(VertexIn &in, VertexOut &out, Vertex &v);
 
 extern __device__
 void FragmentShader(FragmentIn &in, glm::vec4 &color);
@@ -48,7 +50,7 @@ void NormalSpace(VertexIn *in, VertexOut *out, Vertex *v) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	if(x >= n_triangle * 3) return;
 
-	VertexShader(in[x], *((glm::mat4*)mvp), out[x], v[x]);
+	VertexShader(in[x], out[x], v[x]);
 }
 
 __global__
@@ -264,7 +266,7 @@ void CUPix::FrontFace(Winding winding) {
 }
 
 void CUPix::ClearColor(float r, float g, float b, float a) {
-	glm::ivec4 color(r * 255.f, g * 255.f, b * 255.f, a * 255.f);
+	glm::ivec4 color = glm::vec4(r, g, b, a) * 255.f;
 	color = glm::clamp(color, glm::ivec4(0), glm::ivec4(255));
 	glm::u8vec4 clear_color = color;
 	cudaMemcpyToSymbol(cu::clear_color, &clear_color, 4);
@@ -323,6 +325,10 @@ void CUPix::MVP(glm::mat4 &mvp) {
 	cudaMemcpyToSymbol(cu::mvp, &mvp, sizeof(glm::mat4));
 }
 
+void CUPix::MV(glm::mat4 &mv) {
+	cudaMemcpyToSymbol(cu::mv, &mv, sizeof(glm::mat4));
+}
+
 void CUPix::Time(double time) {
 	float t = time;
 	cudaMemcpyToSymbol(cu::time, &t, sizeof(float));
@@ -353,6 +359,10 @@ void CUPix::Texture(unsigned char *d, int w, int h, bool gamma_correction) {
 		cudaCreateChannelDesc(8, 8, 8, 8, cudaChannelFormatKindUnsigned);
 
 	cudaBindTexture2D(NULL, cu::texture, texture_buf_, desc, w, h, pitch);
+}
+
+void CUPix::Light(glm::vec4 &light) {
+	cudaMemcpyToSymbol(cu::light, &light, sizeof(light));
 }
 
 }

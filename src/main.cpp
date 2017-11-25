@@ -80,6 +80,9 @@ int main(int argc, char *argv[]) {
 	// pix.CullFace(BACK);
 	// pix.FrontFace(CW);
 
+	glm::vec4 light(5.f, 5.f, 5.f, 10.f);
+	pix.Light(light);
+
 	Model model(argv[1]);
 	pix.VertexData(model.n_vertex(), model.vertex(), model.normal(), model.uv());
 
@@ -94,9 +97,12 @@ int main(int argc, char *argv[]) {
 		pix.Clear();
 
 		glm::mat4 m;
+		glm::mat4 v = camera.v();
 		glm::mat4 vp = camera.vp();
 		glm::mat4 mvp = vp * m;
+		glm::mat4 mv = v * m;
 		pix.MVP(mvp);
+		pix.MV(mv);
 
 		pix.Time(glfwGetTime());
 		pix.Draw();
