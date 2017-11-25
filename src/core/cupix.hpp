@@ -48,9 +48,10 @@ struct FragmentIn {
 	glm::vec3 color;
 	glm::vec2 uv;
 };
-struct AABB {
+struct Triangle {
 	glm::ivec2 v[2];
 	Winding winding;
+	bool empty;
 };
 struct Light {
 	glm::ivec3 position;
@@ -70,12 +71,12 @@ class CUPix {
 	Winding front_face_ = CCW;
 
 	int n_triangle_, n_vertex_;
-	AABB *aabb_;
+	Triangle *triangle_;
 
 	VertexIn *vertex_in_;
 	VertexOut *vertex_out_;
 	Vertex *vertex_buf_;
-	AABB *aabb_buf_;
+	Triangle *triangle_buf_;
 	unsigned char *frame_buf_;
 	float *depth_buf_;
 	unsigned char *texture_buf_;

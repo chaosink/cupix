@@ -67,7 +67,7 @@ void WindowSpace(Vertex *v) {
 }
 
 __global__
-void GetAABB(Vertex *v, AABB *aabb) {
+void AssemTriangle(Vertex *v, Triangle *triangle) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	if(x >= n_triangle) return;
 
@@ -87,9 +87,12 @@ void GetAABB(Vertex *v, AABB *aabb) {
 	iv_min = glm::clamp(iv_min, c0, c1);
 	iv_max = glm::clamp(iv_max, c0, c1);
 
-	aabb[x].v[0] = iv_min;
-	aabb[x].v[1] = iv_max;
-	aabb[x].winding = Winding((p1.x - p0.x) * (p2.y - p1.y) - (p1.y - p0.y) * (p2.x - p1.x) < 0);
+	triangle[x].v[0] = iv_min;
+	triangle[x].v[1] = iv_max;
+	triangle[x].winding = Winding((p1.x - p0.x) * (p2.y - p1.y) - (p1.y - p0.y) * (p2.x - p1.x) < 0);
+	triangle[x].empty = (iv_min.x == iv_max.x || iv_min.y == iv_max.y
+		|| v[0].position.z > 1 && v[1].position.z > 1 && v[2].position.z > 1
+		|| v[0].position.z <-1 && v[1].position.z <-1 && v[2].position.z <-1);
 }
 
 __device__
@@ -133,9 +136,9 @@ void Rasterize(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, floa
 	if(x >= w || y >= h) return;
 	int i_thread = y * w + x;
 
-	if(v[0].position.z > 1 && v[1].position.z > 1 && v[2].position.z > 1
-	|| v[0].position.z <-1 && v[1].position.z <-1 && v[2].position.z <-1)
-		return;
+	// if(v[0].position.z > 1 && v[1].position.z > 1 && v[2].position.z > 1
+	// || v[0].position.z <-1 && v[1].position.z <-1 && v[2].position.z <-1)
+	// 	return; // cause FPS reduction of about 1
 	glm::vec2
 		p0 = glm::vec2(v[0].position.x, v[0].position.y),
 		p1 = glm::vec2(v[1].position.x, v[1].position.y),
@@ -274,14 +277,15 @@ void CUPix::Clear() {
 void CUPix::Draw() {
 	cu::NormalSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_in_, vertex_out_, vertex_buf_);
 	cu::WindowSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_buf_);
-	cu::GetAABB<<<(n_triangle_-1)/32+1, 32>>>(vertex_buf_, aabb_buf_);
-	cudaMemcpy(aabb_, aabb_buf_, sizeof(AABB) * n_triangle_, cudaMemcpyDeviceToHost);
+	cu::AssemTriangle<<<(n_triangle_-1)/32+1, 32>>>(vertex_buf_, triangle_buf_);
+	cudaMemcpy(triangle_, triangle_buf_, sizeof(Triangle) * n_triangle_, cudaMemcpyDeviceToHost);
 	for(int i = 0; i < n_triangle_; i++)
-		if(!cull_ || (cull_face_ != FRONT_AND_BACK
-		&& (aabb_[i].winding == front_face_ != cull_face_))) {
-			glm::ivec2 dim = aabb_[i].v[1] - aabb_[i].v[0] + 1;
-			cu::Rasterize<<<dim3((dim.x-1)/4+1, (dim.y-1)/8+1), dim3(4, 8)>>>
-				(aabb_[i].v[0], dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, frame_buf_);
+		if(!triangle_[i].empty)
+			if(!cull_ || (cull_face_ != FRONT_AND_BACK
+			&& (triangle_[i].winding == front_face_ != cull_face_))) {
+				glm::ivec2 dim = triangle_[i].v[1] - triangle_[i].v[0] + 1;
+				cu::Rasterize<<<dim3((dim.x-1)/4+1, (dim.y-1)/8+1), dim3(4, 8)>>>
+					(triangle_[i].v[0], dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, frame_buf_);
 		}
 	if(record_)
 		cudaMemcpy(frame_, frame_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
@@ -309,8 +313,8 @@ void CUPix::VertexData(int size, float *position, float *normal, float *uv) {
 	cudaMalloc(&vertex_in_, sizeof(v));
 	cudaMemcpy(vertex_in_, v, sizeof(v), cudaMemcpyHostToDevice);
 	cudaMalloc(&vertex_buf_, sizeof(Vertex) * n_vertex_);
-	cudaMalloc(&aabb_buf_, sizeof(AABB) * n_triangle_);
-	aabb_ = new AABB[n_triangle_];
+	cudaMalloc(&triangle_buf_, sizeof(Triangle) * n_triangle_);
+	triangle_ = new Triangle[n_triangle_];
 	cudaMalloc(&vertex_out_, sizeof(VertexOut) * n_vertex_);
 	cudaMemcpyToSymbol(cu::n_triangle, &n_triangle_, sizeof(int));
 }

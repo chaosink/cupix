@@ -4,6 +4,10 @@ project(cupix)
 find_package(CUDA 9.0 REQUIRED)
 find_package(OpenGL REQUIRED)
 
+# C++ list
+set(CMAKE_CXX_STANDARD 11)
+list(APPEND CMAKE_CXX_FLAGS "-std=c++11 -Wall -O3")
+
 option(BUILD_UTILS "utilities" OFF)
 add_subdirectory(src/thirdparty/glew-2.1.0/build/cmake)
 
@@ -11,10 +15,6 @@ option(GLFW_BUILD_EXAMPLES "Build the GLFW example programs" OFF)
 option(GLFW_BUILD_TESTS "Build the GLFW test programs" OFF)
 option(GLFW_BUILD_DOCS "Build the GLFW documentation" OFF)
 add_subdirectory(src/thirdparty/glfw-3.2.1)
-
-# C++ list
-set(CMAKE_CXX_STANDARD 11)
-list(APPEND CMAKE_CXX_FLAGS "-std=c++11 -Wall")
 
 # CUDA list
 list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_30,code=sm_30)
