@@ -292,13 +292,13 @@ void FragmentShader(FragmentIn &in, vec4 &color) {
 	// vec4 c = Lighting(in);
 
 	/********** Shadertoy **********/
-	// vec4 c = FlickeringDots(vec2(in.coord));
-	// vec4 c = Quadtree(vec2(in.coord));
-	// vec4 c = Sunflower(vec2(in.coord));
-	// vec4 c = Mandeltunnel(vec2(in.coord));
-	// vec4 c = MandelbrotsDarkerSide(vec2(in.coord));
-	// vec4 c = DeformFlower(vec2(in.coord));
-	vec4 c = Heart2D(vec2(in.coord));
+	// vec4 c = FlickeringDots(in.coord);
+	// vec4 c = Quadtree(in.coord);
+	// vec4 c = Sunflower(in.coord);
+	// vec4 c = Mandeltunnel(in.coord);
+	// vec4 c = MandelbrotsDarkerSide(in.coord);
+	// vec4 c = DeformFlower(in.coord);
+	vec4 c = Heart2D(in.coord);
 
 	/********** Output color **********/
 	color = vec4(c.x, c.y, c.z, c.w);

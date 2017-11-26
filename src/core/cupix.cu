@@ -154,7 +154,7 @@ void Rasterize(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, floa
 
 	if(e0 >= 0 && e1 >= 0 && e2 >= 0
 	|| e0 <= 0 && e1 <= 0 && e2 <= 0) {
-		FragmentIn fragment = {glm::ivec2(x, y)};
+		FragmentIn fragment = {glm::vec2(x, y)};
 		glm::vec3 e = glm::vec3(e0, e1, e2) / (e0 + e1 + e2);
 		Interpolate(v, va, e, &fragment);
 		if(fragment.z > 1 || fragment.z < -1) return;

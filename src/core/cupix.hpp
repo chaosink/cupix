@@ -56,7 +56,7 @@ struct Triangle {
 	bool empty;
 };
 struct FragmentIn {
-	glm::ivec2 coord;
+	glm::vec2 coord;
 	float z;
 
 	glm::vec3 position;
