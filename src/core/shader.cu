@@ -66,21 +66,25 @@ void FragmentShader(FragmentIn &in, vec4 &color) {
 	const float shininess = 16.0;
 
 	float specular = 0.f;
-	float lambertian = max(dot(light_direction, normal), 0.f);
-	if(lambertian > 0.f) {
-		vec3 eye_direction = normalize(-position);
-		if(toggle) {
-			/***** Blinn-Phong shading *****/
-			vec3 half = normalize(light_direction + eye_direction);
-			float cos_alpha = clamp(dot(half, normal), 0.f, 1.f);
-			specular = pow(cos_alpha, shininess);
-		} else {
-			/***** Phong shading *****/
-			vec3 reflection = reflect(-light_direction, normal);
-			float cos_alpha = clamp(dot(reflection, eye_direction), 0.f, 1.f);
-			specular = pow(cos_alpha, shininess / 4.f); // exponent is different
-		}
+	float cos_theta = dot(light_direction, normal);
+	cos_theta = cos_theta * 0.5f + 0.5f; // normalized shading
+	float lambertian = clamp(cos_theta, 0.f, 1.f);
+
+	vec3 eye_direction = normalize(-position);
+	if(toggle) {
+		/***** Blinn-Phong shading *****/
+		vec3 half = normalize(light_direction + eye_direction);
+		float cos_alpha = dot(half, normal);
+		cos_alpha = cos_alpha * 0.5f + 0.5f; // normalized shading
+		specular = pow(clamp(cos_alpha, 0.f, 1.f), shininess);
+	} else {
+		/***** Phong shading *****/
+		vec3 reflection = reflect(-light_direction, normal);
+		float cos_alpha = dot(reflection, eye_direction);
+		cos_alpha = cos_alpha * 0.5f + 0.5f; // normalized shading
+		specular = pow(clamp(cos_alpha, 0.f, 1.f), shininess / 4.f); // exponent is different
 	}
+
 	vec4 c(
 		ambient_color +
 		diffuse_color * lambertian * light_color * light_power / distance +

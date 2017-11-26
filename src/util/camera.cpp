@@ -36,15 +36,25 @@ Camera::Camera(GLFWwindow *window, int window_w, int window_h)
 }
 
 glm::mat4 Camera::Update() {
-	fix_.Update([this] {
-		vp_ = glm::mat4( // ancient door
-			1.036194, 0.564289, 0.603825, 0.602619,
-			-0.000001, 2.250835, -0.362342, -0.361618,
-			0.877755, -0.666144, -0.712819, -0.711395,
-			2.318171, -42.061245, 84.176903, 84.208519
+	fix_.Update([this]{
+		vp_ = glm::mat4(
+			0.456450, 1.533163, 0.696896, 0.695504,
+			0.000000, 1.782821, -0.675638, -0.674288,
+			1.278986, -0.547163, -0.248712, -0.248215,
+			0.060935, 0.677144, 2.279552, 2.474798
 		);
-	}, []{});
+		v_ = glm::mat4(
+			0.336121, 0.635057, -0.695504, 0.000000,
+			0.000000, 0.738469, 0.674288, 0.000000,
+			0.941819, -0.226642, 0.248215, 0.000000,
+			0.044872, 0.280482, -2.474798, 1.000000
+		);
+	}, [this]{
+		glfwGetCursorPos(window_, &x_old_, &y_old_);
+	});
 	if(fix_.state()) return vp_;
+
+	printf("helle\n");
 
 	time_new_ = glfwGetTime();
 	float time = time_new_ - time_old_;
@@ -100,8 +110,9 @@ glm::mat4 Camera::Update() {
 		angle_vertical_ = angle_vertical_init_;
 		fov_ = fov_init_;
 	}
-	print_vp_.Update([this] {
+	print_vp_.Update([this]{
 		PrintMat(vp_, "\t\t", "vp_");
+		PrintMat(v_, "\t\t", "v_");
 	});
 
 	fov_ += scoll * time * scroll_speed_;
