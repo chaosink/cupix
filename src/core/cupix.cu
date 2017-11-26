@@ -29,10 +29,10 @@ __constant__ __device__ unsigned char bit[8] = {
 	0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 __device__ char zb16[zb16_file_size];
 
-extern __device__
+__device__
 void VertexShader(VertexIn &in, VertexOut &out, Vertex &v);
 
-extern __device__
+__device__
 void FragmentShader(FragmentIn &in, glm::vec4 &color);
 
 __global__
