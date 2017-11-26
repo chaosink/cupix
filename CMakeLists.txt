@@ -38,8 +38,10 @@ include_directories(
 )
 
 cuda_add_library(core
-	src/core/shader.cu
 	src/core/cupix.cu
+	src/core/vertex_shader.cu
+	src/core/fragment_shader.cu
+	src/core/shadertoy.cu
 )
 
 cuda_add_executable(cupix

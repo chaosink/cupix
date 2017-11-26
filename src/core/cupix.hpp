@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cuda_runtime.h>
-#define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 
 namespace cupix {
