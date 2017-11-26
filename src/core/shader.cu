@@ -120,6 +120,23 @@ vec4 Quadtree(vec2 U) {
 	return o;
 }
 
+#define N 10.f
+__device__ // https://www.shadertoy.com/view/4sjSRt
+vec4 Sunflower(vec2 u) {
+	vec4 o;
+	o.x = w; o.y = h;
+	u = (u+u-vec2(w,h))/o.y;
+	//u = 2.*(u / iResolution.y -vec2(.9,.5));
+	float t = time,
+		r = length(u), a = atan(u.y,u.x),
+		i = floor(r*N);
+	a *= floor(pow(128.f,i/N)); 	 a += 20.f*sin(.5f*t)+123.34f*i-100.f*r*cos(.5f*t); // (r-0.*i/N)
+	r +=  (.5f+.5f*cos(a)) / N;    r = floor(N*r)/N;
+	o = (1.f-r)*vec4(.5f,1.f,1.5f,1.f);
+	return o;
+}
+#undef N
+
 __device__
 void FragmentShader(FragmentIn &in, vec4 &color) {
 	/********** Visualization of normal **********/
@@ -133,10 +150,13 @@ void FragmentShader(FragmentIn &in, vec4 &color) {
 	// float4 c = tex2D(texture, in.uv.s, 1 - in.uv.t);
 
 	/********** Shadertoy - Flickering Dots **********/
-	vec4 c = FlickeringDots(in);
+	// vec4 c = FlickeringDots(in);
 
 	/********** Shadertoy - Quadtree **********/
 	// vec4 c = Quadtree(vec2(in.coord));
+
+	/********** Shadertoy - Sunflower **********/
+	vec4 c = Sunflower(vec2(in.coord));
 
 	/********** Phong/Blinn-Phong shading **********/
 	// vec4 c = Lighting(in);
