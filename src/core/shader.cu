@@ -44,35 +44,43 @@ void FragmentShader(FragmentIn &in, vec4 &color) {
 	// float d = dot(uv, uv);
 	// vec4 c = vec4(0.5f + 0.5f * cos(d / 5.f + 10.f * time));
 
-	/********** Phong shading **********/
+	/********** Lighting **********/
 	mat4 m = *((mat4*)mv);
 	vec3 light_position = m * vec4(light[0], light[1], light[2], 1.0f);
 	vec3 position = in.position;
-	vec3 normal = in.normal;
+	vec3 normal = normalize(in.normal);
 	vec3 light_direction = light_position - position;
-	vec3 eye_direction = -position;
+	float distance = length(light_direction);
+	distance = distance * distance;
+	light_direction = normalize(light_direction);
 
 	vec3 light_color = vec3(1.f, 1.f, 1.f);
 	float light_power = 40.f;
 
-	// Material properties
-	vec3 diffuse_color  = vec3(0.9f, 0.7f, 0.5f);
-	vec3 ambient_color  = vec3(0.4f, 0.4f, 0.4f) * diffuse_color;
-	vec3 specular_color = vec3(0.3f, 0.3f, 0.3f);
+	const vec3 diffuse_color  = vec3(0.9f, 0.6f, 0.3f);
+	const vec3 ambient_color  = vec3(0.4f, 0.4f, 0.4f) * diffuse_color;
+	const vec3 specular_color = vec3(0.3f, 0.3f, 0.3f);
+	const float shininess = 16.0;
 
-	// Distance to the light
-	float distance = length(light_position - position);
-	vec3 n = normalize(normal);
-	vec3 l = normalize(light_direction);
-	float cos_theta = clamp(dot(n, l), 0.f, 1.f);
-	vec3 e = normalize(eye_direction);
-	vec3 r = reflect(-l, n);
-	float cos_alpha = clamp(dot(e, r), 0.f, 1.f);
+	float specular = 0.f;
+	float lambertian = max(dot(light_direction, normal), 0.f);
+	if(lambertian > 0.f) {
+		vec3 eye_direction = normalize(-position);
 
+		/***** Blinn-Phong shading *****/
+		// vec3 half = normalize(light_direction + eye_direction);
+		// float cos_alpha = clamp(dot(half, normal), 0.f, 1.f);
+		// specular = pow(cos_alpha, shininess);
+
+		/***** Phong shading *****/
+		vec3 reflection = reflect(-light_direction, normal);
+		float cos_alpha = clamp(dot(reflection, eye_direction), 0.f, 1.f);
+		specular = pow(cos_alpha, shininess / 4.f); // exponent is different
+	}
 	vec4 c(
 		ambient_color +
-		diffuse_color * light_color * light_power * cos_theta / (distance * distance) +
-		specular_color * light_color * light_power * pow(cos_alpha, 5.f) / (distance * distance),
+		diffuse_color * lambertian * light_color * light_power / distance +
+		specular_color * specular  * light_color * light_power / distance,
 		1.f);
 
 	/********** Output color **********/

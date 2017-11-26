@@ -266,7 +266,7 @@ void CUPix::FrontFace(Winding winding) {
 }
 
 void CUPix::ClearColor(float r, float g, float b, float a) {
-	glm::ivec4 color = glm::vec4(r, g, b, a) * 255.f;
+	glm::ivec4 color = glm::vec4(r * 255.f, g * 255.f, b * 255.f, a * 255.f);
 	color = glm::clamp(color, glm::ivec4(0), glm::ivec4(255));
 	glm::u8vec4 clear_color = color;
 	cudaMemcpyToSymbol(cu::clear_color, &clear_color, 4);

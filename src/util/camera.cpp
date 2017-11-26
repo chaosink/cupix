@@ -33,8 +33,6 @@ Camera::Camera(GLFWwindow *window, int window_w, int window_h)
 	glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwGetCursorPos(window_, &x_old_, &y_old_);
 	Update();
-	glm::vec3 v(1, 2, 3);
-	PrintVec(v);
 }
 
 void Camera::Update() {
