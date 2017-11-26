@@ -15,13 +15,15 @@ public:
 		: window_(window), key_(key), state_(state) {}
 
 	template<typename T0, typename T1>
-	bool Update(T0 On, T1 Off) {
+	bool Update(T0 Off2On, T1 On2Off) {
 		if(count_-- > 0) return state_;
 		if(glfwGetKey(window_, key_) == GLFW_PRESS) {
 			if(!pressed_) {
 				state_ = !state_;
-				if(state_) On(); // excute On() when state_ change from false to true
-				else Off(); // excute Off() when state_ change from true to false
+				if(state_) Off2On();
+				// call Off2On() when state_ changes from off(false) to on(true)
+				else On2Off();
+				// call On2Off() when state_ changes from on(true) to off(false)
 				pressed_ = true;
 				count_ = jitter_;
 			}
@@ -35,12 +37,12 @@ public:
 	}
 
 	template<typename T>
-	bool Update(T OnOff) {
+	bool Update(T F) {
 		if(count_-- > 0) return state_;
 		if(glfwGetKey(window_, key_) == GLFW_PRESS) {
 			if(!pressed_) {
 				state_ = !state_;
-				OnOff(); // excute OnOff() when state_ changes
+				F(); // call F() when state_ changes
 				pressed_ = true;
 				count_ = jitter_;
 			}
