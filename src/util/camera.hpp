@@ -33,8 +33,8 @@ class Camera {
 	double time_old_ = glfwGetTime(), time_new_;
 	double x_old_, y_old_;
 
-	Toggle fix = Toggle(window_, GLFW_KEY_F, false);
-	// Toggle print(window_, GLFW_KEY_P, false);
+	Toggle fix_ = Toggle(window_, GLFW_KEY_F, false);
+	Toggle print_vp_ = Toggle(window_, GLFW_KEY_P, false);
 	bool print_pressed = false;
 public:
 	Camera(GLFWwindow *window, int window_w, int window_h);

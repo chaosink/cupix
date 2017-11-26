@@ -36,16 +36,15 @@ Camera::Camera(GLFWwindow *window, int window_w, int window_h)
 }
 
 glm::mat4 Camera::Update() {
-	fix.Update();
-	if(fix.state()) {
+	fix_.Update([this] {
 		vp_ = glm::mat4( // ancient door
 			1.036194, 0.564289, 0.603825, 0.602619,
 			-0.000001, 2.250835, -0.362342, -0.361618,
 			0.877755, -0.666144, -0.712819, -0.711395,
 			2.318171, -42.061245, 84.176903, 84.208519
 		);
-		return vp_;
-	}
+	}, []{});
+	if(fix_.state()) return vp_;
 
 	time_new_ = glfwGetTime();
 	float time = time_new_ - time_old_;
@@ -101,14 +100,9 @@ glm::mat4 Camera::Update() {
 		angle_vertical_ = angle_vertical_init_;
 		fov_ = fov_init_;
 	}
-	if(glfwGetKey(window_, GLFW_KEY_P) == GLFW_PRESS) {
-		if(!print_pressed) {
-			print_pressed = true;
-			PrintMat(vp_, "\t\t\t\t", "vp_");
-		}
-	} else {
-		print_pressed = false;
-	}
+	print_vp_.Update([this] {
+		PrintMat(vp_, "\t\t", "vp_");
+	});
 
 	fov_ += scoll * time * scroll_speed_;
 	scoll = 0;

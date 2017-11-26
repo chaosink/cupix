@@ -111,7 +111,12 @@ int main(int argc, char *argv[]) {
 		pix.MV(mv);
 
 		pix.Time(glfwGetTime());
-		pix.Toggle(toggle.Update());
+		pix.Toggle(toggle.Update([] {
+			printf("\nUse Blinn-Phong shading\n");
+		}, [] {
+			printf("\nUse Phong shading\n");
+		}
+		));
 
 		pix.Draw();
 		pix.DrawFPS(fps.Update() + 0.5f);
