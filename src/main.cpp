@@ -10,6 +10,7 @@ using namespace std;
 #include "util/camera.hpp"
 #include "util/fps.hpp"
 #include "util/video.hpp"
+#include "util/toggle.hpp"
 
 using namespace cupix;
 
@@ -80,7 +81,11 @@ int main(int argc, char *argv[]) {
 	// pix.CullFace(BACK);
 	// pix.FrontFace(CW);
 
-	glm::vec4 light(3.f, 4.f, 5.f, 1.f);
+	cu::Light light{
+		3.f, 4.f, 5.f, // position
+		1.f, 1.f, 1.f, // color
+		40.f           // power
+	};
 	pix.Light(light);
 
 	Model model(argv[1]);
@@ -91,27 +96,28 @@ int main(int argc, char *argv[]) {
 
 	Camera camera(window, window_w, window_h);
 	FPS fps;
+	Toggle toggle(window, GLFW_KEY_T, true);
 	Video video(window_w, window_h);
 	while(glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window)) {
 		pix.MapResources();
 		pix.Clear();
 
 		glm::mat4 m;
-		glm::mat4 v = camera.v();
-		glm::mat4 vp = camera.vp();
+		glm::mat4 vp = camera.Update();
 		glm::mat4 mvp = vp * m;
-		glm::mat4 mv = v * m;
 		pix.MVP(mvp);
+		glm::mat4 v = camera.v();
+		glm::mat4 mv = v * m;
 		pix.MV(mv);
 
 		pix.Time(glfwGetTime());
+		pix.Toggle(toggle.Update());
+
 		pix.Draw();
-		pix.DrawFPS(fps.fps());
+		pix.DrawFPS(fps.Update() + 0.5f);
 		pix.UnmapResources();
 
 		UpdateGL(window, window_w, window_h);
-		camera.Update();
-		fps.Update();
 		if(record) video.Add(pix.frame());
 	}
 	fps.Term();

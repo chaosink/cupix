@@ -35,23 +35,17 @@ Camera::Camera(GLFWwindow *window, int window_w, int window_h)
 	Update();
 }
 
-void Camera::Update() {
-	if(glfwGetKey(window_, GLFW_KEY_F) == GLFW_PRESS) {
-		if(!fixed_pressed) {
-			fixed_pressed = true;
-			fixed = !fixed;
-			if(fixed)
-				vp_ = glm::mat4( // ancient door
-					1.036194, 0.564289, 0.603825, 0.602619,
-					-0.000001, 2.250835, -0.362342, -0.361618,
-					0.877755, -0.666144, -0.712819, -0.711395,
-					2.318171, -42.061245, 84.176903, 84.208519
-				);
-		}
-	} else {
-		fixed_pressed = false;
+glm::mat4 Camera::Update() {
+	fix.Update();
+	if(fix.state()) {
+		vp_ = glm::mat4( // ancient door
+			1.036194, 0.564289, 0.603825, 0.602619,
+			-0.000001, 2.250835, -0.362342, -0.361618,
+			0.877755, -0.666144, -0.712819, -0.711395,
+			2.318171, -42.061245, 84.176903, 84.208519
+		);
+		return vp_;
 	}
-	if(fixed) return;
 
 	time_new_ = glfwGetTime();
 	float time = time_new_ - time_old_;
@@ -130,4 +124,6 @@ void Camera::Update() {
 	time_old_ = time_new_;
 	x_old_ = x;
 	y_old_ = y;
+
+	return vp_;
 }

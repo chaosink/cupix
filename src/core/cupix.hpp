@@ -6,6 +6,16 @@
 
 namespace cupix {
 
+namespace cu{
+
+struct Light {
+	float position[3];
+	float color[3];
+	float power;
+};
+
+}
+
 const double PI  = 3.14159265358979323846;
 
 enum Winding : unsigned char {
@@ -25,9 +35,6 @@ enum Flag : unsigned char {
 	CULL_FACE,
 };
 
-struct Vertex {
-	glm::vec4 position;
-};
 struct VertexIn {
 	glm::vec3 position;
 	glm::vec3 normal;
@@ -40,6 +47,14 @@ struct VertexOut {
 	glm::vec3 color;
 	glm::vec2 uv;
 };
+struct Vertex {
+	glm::vec4 position;
+};
+struct Triangle {
+	glm::ivec2 v[2];
+	Winding winding;
+	bool empty;
+};
 struct FragmentIn {
 	glm::ivec2 coord;
 	float z;
@@ -48,11 +63,6 @@ struct FragmentIn {
 	glm::vec3 normal;
 	glm::vec3 color;
 	glm::vec2 uv;
-};
-struct Triangle {
-	glm::ivec2 v[2];
-	Winding winding;
-	bool empty;
 };
 
 class CUPix {
@@ -96,7 +106,8 @@ public:
 	void MV(glm::mat4 &mv);
 	void Time(double time);
 	void Texture(unsigned char *data, int w, int h, bool gamma_correction);
-	void Light(glm::vec4 &light);
+	void Light(cu::Light &light);
+	void Toggle(bool toggle);
 	unsigned char* frame() {
 		return frame_;
 	}

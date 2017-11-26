@@ -16,7 +16,7 @@ public:
 		memcpy(frame_.back(), frame, w_ * h_ * 3);
 	}
 	void Save(const char *file_name) {
-		std::fstream ofs(file_name, ofs.binary | ofs.out);
+		std::ofstream ofs(file_name, ofs.binary);
 		for(auto f: frame_)
 			ofs.write(reinterpret_cast<char*>(f), w_ * h_ * 3);
 		ofs.close();

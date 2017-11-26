@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
+#include "toggle.hpp"
 
 void PrintMat(glm::mat4 &m, const char *indent = "", const char *name = NULL);
 void PrintVec(glm::vec3 &v, const char *indent = "", const char *name = NULL);
@@ -32,8 +33,8 @@ class Camera {
 	double time_old_ = glfwGetTime(), time_new_;
 	double x_old_, y_old_;
 
-	bool fixed = false;
-	bool fixed_pressed = false;
+	Toggle fix = Toggle(window_, GLFW_KEY_F, false);
+	// Toggle print(window_, GLFW_KEY_P, false);
 	bool print_pressed = false;
 public:
 	Camera(GLFWwindow *window, int window_w, int window_h);
@@ -46,5 +47,5 @@ public:
 	glm::mat4 vp() {
 		return vp_;
 	}
-	void Update();
+	glm::mat4 Update();
 };

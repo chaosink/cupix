@@ -10,12 +10,13 @@ namespace cupix {
 
 namespace cu {
 
-__constant__ __device__ int w, h;
-__constant__ __device__ float time;
 texture<uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat> texture;
+__constant__ __device__ int w, h;
+__constant__ __device__ Light light;
 __constant__ __device__ float mvp[16];
 __constant__ __device__ float mv[16];
-__constant__ __device__ float light[4];
+__constant__ __device__ float time;
+__constant__ __device__ bool toggle;
 
 __constant__ __device__ int n_triangle;
 __constant__ __device__ bool depth_test = true;
@@ -23,7 +24,7 @@ __constant__ __device__ bool blend = false;
 __constant__ __device__ unsigned char clear_color[4];
 
 const int zb16_file_size = 269888;
-__constant__ __device__ unsigned char key[8] = {
+__constant__ __device__ unsigned char bit[8] = {
 	0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 __device__ char zb16[zb16_file_size];
 
@@ -189,7 +190,7 @@ void Font(int ch, int x0, int y0, unsigned char *frame_buf) {
 
 	int offset = (ch + 155) * 32 + 0x2000;
 	char c = zb16[offset + (16 - y) * 2 + x / 8];
-	if(!(c & key[(x % 8)])) return;
+	if(!(c & bit[(x % 8)])) return;
 	frame_buf[i_pixel * 3 + 0] = 255 - clear_color[0];
 	frame_buf[i_pixel * 3 + 1] = 255 - clear_color[1];
 	frame_buf[i_pixel * 3 + 2] = 255 - clear_color[2];
@@ -230,6 +231,8 @@ void CUPix::MapResources() {
 }
 
 void CUPix::UnmapResources() {
+	if(record_)
+		cudaMemcpy(frame_, frame_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
 	cudaGraphicsUnmapResources(1, &pbo_resource_, NULL);
 }
 
@@ -289,8 +292,6 @@ void CUPix::Draw() {
 				cu::Rasterize<<<dim3((dim.x-1)/4+1, (dim.y-1)/8+1), dim3(4, 8)>>>
 					(triangle_[i].v[0], dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, frame_buf_);
 		}
-	if(record_)
-		cudaMemcpy(frame_, frame_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
 }
 
 void CUPix::DrawFPS(int fps) {
@@ -361,8 +362,12 @@ void CUPix::Texture(unsigned char *d, int w, int h, bool gamma_correction) {
 	cudaBindTexture2D(NULL, cu::texture, texture_buf_, desc, w, h, pitch);
 }
 
-void CUPix::Light(glm::vec4 &light) {
+void CUPix::Light(cu::Light &light) {
 	cudaMemcpyToSymbol(cu::light, &light, sizeof(light));
+}
+
+void CUPix::Toggle(bool toggle) {
+	cudaMemcpyToSymbol(cu::toggle, &toggle, sizeof(toggle));
 }
 
 }

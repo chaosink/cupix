@@ -6,12 +6,13 @@ namespace cupix {
 
 namespace cu {
 
-extern __constant__ __device__ int w, h;
-extern __constant__ __device__ float time;
 extern texture<uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat> texture;
 extern __constant__ __device__ float mvp[16];
 extern __constant__ __device__ float mv[16];
-extern __constant__ __device__ float light[4];
+extern __constant__ __device__ int w, h;
+extern __constant__ __device__ float time;
+extern __constant__ __device__ Light light;
+extern __constant__ __device__ bool toggle;
 
 using namespace glm;
 
@@ -29,9 +30,11 @@ void VertexShader(VertexIn &in, VertexOut &out, Vertex &v) {
 
 __device__
 void FragmentShader(FragmentIn &in, vec4 &color) {
-	/********** Visualization of normal and uv **********/
+	/********** Visualization of normal **********/
 	// vec4 c = vec4(in.normal, 0.f);
 	// vec4 c = vec4(in.normal * 0.5f + 0.5f, 0.5f);
+
+	/********** Visualization of uv **********/
 	// vec4 c = vec4(in.uv, 0.f, 0.f);
 
 	/********** Texture sampling **********/
@@ -46,7 +49,7 @@ void FragmentShader(FragmentIn &in, vec4 &color) {
 
 	/********** Lighting **********/
 	mat4 m = *((mat4*)mv);
-	vec3 light_position = m * vec4(light[0], light[1], light[2], 1.0f);
+	vec3 light_position = m * vec4(light.position[0], light.position[1], light.position[2], 1.0f);
 	vec3 position = in.position;
 	vec3 normal = normalize(in.normal);
 	vec3 light_direction = light_position - position;
@@ -54,8 +57,8 @@ void FragmentShader(FragmentIn &in, vec4 &color) {
 	distance = distance * distance;
 	light_direction = normalize(light_direction);
 
-	vec3 light_color = vec3(1.f, 1.f, 1.f);
-	float light_power = 40.f;
+	vec3 light_color = vec3(light.color[0], light.color[1], light.color[2]);
+	float light_power = light.power;
 
 	const vec3 diffuse_color  = vec3(0.9f, 0.6f, 0.3f);
 	const vec3 ambient_color  = vec3(0.4f, 0.4f, 0.4f) * diffuse_color;
@@ -66,16 +69,17 @@ void FragmentShader(FragmentIn &in, vec4 &color) {
 	float lambertian = max(dot(light_direction, normal), 0.f);
 	if(lambertian > 0.f) {
 		vec3 eye_direction = normalize(-position);
-
-		/***** Blinn-Phong shading *****/
-		// vec3 half = normalize(light_direction + eye_direction);
-		// float cos_alpha = clamp(dot(half, normal), 0.f, 1.f);
-		// specular = pow(cos_alpha, shininess);
-
-		/***** Phong shading *****/
-		vec3 reflection = reflect(-light_direction, normal);
-		float cos_alpha = clamp(dot(reflection, eye_direction), 0.f, 1.f);
-		specular = pow(cos_alpha, shininess / 4.f); // exponent is different
+		if(toggle) {
+			/***** Blinn-Phong shading *****/
+			vec3 half = normalize(light_direction + eye_direction);
+			float cos_alpha = clamp(dot(half, normal), 0.f, 1.f);
+			specular = pow(cos_alpha, shininess);
+		} else {
+			/***** Phong shading *****/
+			vec3 reflection = reflect(-light_direction, normal);
+			float cos_alpha = clamp(dot(reflection, eye_direction), 0.f, 1.f);
+			specular = pow(cos_alpha, shininess / 4.f); // exponent is different
+		}
 	}
 	vec4 c(
 		ambient_color +
