@@ -1,5 +1,3 @@
-#include <cstdio>
-
 #include "cupix.hpp"
 
 namespace cupix {
@@ -7,11 +5,12 @@ namespace cupix {
 namespace cu {
 
 extern texture<uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat> texture;
+extern __constant__ __device__ int w, h;
+extern __constant__ __device__ int n_light;
+extern __constant__ __device__ Light light[4];
 extern __constant__ __device__ float mvp[16];
 extern __constant__ __device__ float mv[16];
-extern __constant__ __device__ int w, h;
 extern __constant__ __device__ float time;
-extern __constant__ __device__ Light light;
 extern __constant__ __device__ bool toggle;
 
 using namespace glm;
@@ -29,25 +28,7 @@ void VertexShader(VertexIn &in, VertexOut &out, Vertex &v) {
 }
 
 __device__
-void FragmentShader(FragmentIn &in, vec4 &color) {
-	/********** Visualization of normal **********/
-	// vec4 c = vec4(in.normal, 0.f);
-	// vec4 c = vec4(in.normal * 0.5f + 0.5f, 0.5f);
-
-	/********** Visualization of uv **********/
-	// vec4 c = vec4(in.uv, 0.f, 0.f);
-
-	/********** Texture sampling **********/
-	// float4 c = tex2D(texture, in.uv.s, 1 - in.uv.t);
-
-	/********** Shadertoy effect **********/
-	// vec2 fragCoord(in.coord.x, in.coord.y);
-	// vec2 iResolution(w, h);
-	// vec2 uv = fragCoord - iResolution / 2.f;
-	// float d = dot(uv, uv);
-	// vec4 c = vec4(0.5f + 0.5f * cos(d / 5.f + 10.f * time));
-
-	/********** Lighting **********/
+vec4 BlinnPhong(FragmentIn &in, Light &light) {
 	mat4 m = *((mat4*)mv);
 	vec3 light_position = m * vec4(light.position[0], light.position[1], light.position[2], 1.0f);
 	vec3 position = in.position;
@@ -67,7 +48,7 @@ void FragmentShader(FragmentIn &in, vec4 &color) {
 
 	float specular = 0.f;
 	float cos_theta = dot(light_direction, normal);
-	cos_theta = cos_theta * 0.5f + 0.5f; // normalized shading
+	// cos_theta = cos_theta * 0.5f + 0.5f; // normalized shading
 	float lambertian = clamp(cos_theta, 0.f, 1.f);
 
 	vec3 eye_direction = normalize(-position);
@@ -75,21 +56,63 @@ void FragmentShader(FragmentIn &in, vec4 &color) {
 		/***** Blinn-Phong shading *****/
 		vec3 half = normalize(light_direction + eye_direction);
 		float cos_alpha = dot(half, normal);
-		cos_alpha = cos_alpha * 0.5f + 0.5f; // normalized shading
+		// cos_alpha = cos_alpha * 0.5f + 0.5f; // normalized shading
 		specular = pow(clamp(cos_alpha, 0.f, 1.f), shininess);
 	} else {
 		/***** Phong shading *****/
 		vec3 reflection = reflect(-light_direction, normal);
 		float cos_alpha = dot(reflection, eye_direction);
-		cos_alpha = cos_alpha * 0.5f + 0.5f; // normalized shading
+		// cos_alpha = cos_alpha * 0.5f + 0.5f; // normalized shading
 		specular = pow(clamp(cos_alpha, 0.f, 1.f), shininess / 4.f); // exponent is different
 	}
 
-	vec4 c(
-		ambient_color +
+	return vec4(
+		ambient_color / float(n_light) +
 		diffuse_color * lambertian * light_color * light_power / distance +
 		specular_color * specular  * light_color * light_power / distance,
 		1.f);
+}
+
+__device__
+vec4 Lighting(FragmentIn &in) {
+	vec4 c;
+	for(int i = 0; i < n_light; i++) {
+		Light l = light[i];
+		if(i == 0) { // move light 0
+			l.position[0] = sinf(time) * 4.f;
+			l.position[2] = cosf(time) * 4.f;
+		}
+		c += BlinnPhong(in, l);
+	}
+	return c;
+}
+
+__device__
+vec4 FlickeringDots(FragmentIn &in) {
+	vec2 fragCoord(in.coord.x, in.coord.y);
+	vec2 iResolution(w, h);
+	vec2 uv = fragCoord - iResolution / 2.f;
+	float d = dot(uv, uv);
+	return vec4(0.5f + 0.5f * cos(d / 5.f + 10.f * time));
+}
+
+__device__
+void FragmentShader(FragmentIn &in, vec4 &color) {
+	/********** Visualization of normal **********/
+	// vec4 c = vec4(in.normal, 0.f);
+	// vec4 c = vec4(in.normal * 0.5f + 0.5f, 0.5f); // normalized
+
+	/********** Visualization of uv **********/
+	// vec4 c = vec4(in.uv, 0.f, 0.f);
+
+	/********** Texture sampling **********/
+	// float4 c = tex2D(texture, in.uv.s, 1 - in.uv.t);
+
+	/********** Shadertoy effect **********/
+	vec4 c = FlickeringDots(in);
+
+	/********** Phong/Blinn-Phong shading **********/
+	// vec4 c = Lighting(in);
 
 	/********** Output color **********/
 	color = vec4(c.x, c.y, c.z, c.w);

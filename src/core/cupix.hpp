@@ -106,7 +106,7 @@ public:
 	void MV(glm::mat4 &mv);
 	void Time(double time);
 	void Texture(unsigned char *data, int w, int h, bool gamma_correction);
-	void Light(cu::Light &light);
+	void Light(int n, cu::Light *light);
 	void Toggle(bool toggle);
 	unsigned char* frame() {
 		return frame_;

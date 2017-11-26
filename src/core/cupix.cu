@@ -12,7 +12,8 @@ namespace cu {
 
 texture<uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat> texture;
 __constant__ __device__ int w, h;
-__constant__ __device__ Light light;
+__constant__ __device__ int n_light;
+__constant__ __device__ Light light[4];
 __constant__ __device__ float mvp[16];
 __constant__ __device__ float mv[16];
 __constant__ __device__ float time;
@@ -362,8 +363,9 @@ void CUPix::Texture(unsigned char *d, int w, int h, bool gamma_correction) {
 	cudaBindTexture2D(NULL, cu::texture, texture_buf_, desc, w, h, pitch);
 }
 
-void CUPix::Light(cu::Light &light) {
-	cudaMemcpyToSymbol(cu::light, &light, sizeof(light));
+void CUPix::Light(int n, cu::Light *light) {
+	cudaMemcpyToSymbol(cu::n_light, &n, sizeof(int));
+	cudaMemcpyToSymbol(cu::light, light, sizeof(cu::Light) * n);
 }
 
 void CUPix::Toggle(bool toggle) {
