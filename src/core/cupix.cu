@@ -40,11 +40,11 @@ void Clear(unsigned char *frame_buf, float *depth_buf) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	int y = threadIdx.y + blockIdx.y * blockDim.y;
 	if(x >= w || y >= h) return;
-	int i_thread = y * w + x;
-	frame_buf[i_thread * 3 + 0] = clear_color[0];
-	frame_buf[i_thread * 3 + 1] = clear_color[1];
-	frame_buf[i_thread * 3 + 2] = clear_color[2];
-	depth_buf[i_thread] = 0;
+	int i_pixel = y * w + x;
+	frame_buf[i_pixel * 3 + 0] = clear_color[0];
+	frame_buf[i_pixel * 3 + 1] = clear_color[1];
+	frame_buf[i_pixel * 3 + 2] = clear_color[2];
+	depth_buf[i_pixel] = 0;
 }
 
 __global__
@@ -138,7 +138,7 @@ void Rasterize(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, floa
 	x += corner.x;
 	y += corner.y;
 	if(x >= w || y >= h) return;
-	int i_thread = y * w + x;
+	int i_pixel = y * w + x;
 
 	// if(v[0].position.z > 1 && v[1].position.z > 1 && v[2].position.z > 1
 	// || v[0].position.z <-1 && v[1].position.z <-1 && v[2].position.z <-1)
@@ -158,27 +158,27 @@ void Rasterize(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, floa
 		glm::vec3 e = glm::vec3(e0, e1, e2) / (e0 + e1 + e2);
 		Interpolate(v, va, e, &fragment);
 		if(fragment.z > 1 || fragment.z < -1) return;
-		if(!depth_test || 1 - fragment.z > depth_buf[i_thread]) {
-			depth_buf[i_thread] = 1 - fragment.z;
+		if(!depth_test || 1 - fragment.z > depth_buf[i_pixel]) {
+			depth_buf[i_pixel] = 1 - fragment.z;
 			glm::vec4 color;
 			FragmentShader(fragment, color);
 			glm::ivec4 icolor;
 			if(blend) {
 				float alpha = color.a;
 				glm::vec4 color_old = glm::vec4(
-					frame_buf[i_thread * 3 + 0],
-					frame_buf[i_thread * 3 + 1],
-					frame_buf[i_thread * 3 + 2],
-					0.0f
+					frame_buf[i_pixel * 3 + 0],
+					frame_buf[i_pixel * 3 + 1],
+					frame_buf[i_pixel * 3 + 2],
+					0.f
 				);
 				icolor = color * 255.f * alpha + color_old * (1.f - alpha);
 			} else {
 				icolor = color * 255.f;
 			}
 			icolor = glm::clamp(icolor, glm::ivec4(0), glm::ivec4(255));
-			frame_buf[i_thread * 3 + 0] = icolor.r;
-			frame_buf[i_thread * 3 + 1] = icolor.g;
-			frame_buf[i_thread * 3 + 2] = icolor.b;
+			frame_buf[i_pixel * 3 + 0] = icolor.r;
+			frame_buf[i_pixel * 3 + 1] = icolor.g;
+			frame_buf[i_pixel * 3 + 2] = icolor.b;
 		}
 	}
 }
@@ -197,17 +197,43 @@ void Font(int ch, int x0, int y0, unsigned char *frame_buf) {
 	frame_buf[i_pixel * 3 + 2] = 255 - clear_color[2];
 }
 
+__global__
+void DownSample(unsigned char *frame_buf, unsigned char *pbo_buf) {
+	int x = threadIdx.x + blockIdx.x * blockDim.x;
+	int y = threadIdx.y + blockIdx.y * blockDim.y;
+	if(x >= w / 2 || y >= h / 2) return;
+	int i_pixel = w / 2 * y + x;
+
+	int p0 = ((y * 2 + 0) * w + x * 2 + 0) * 3;
+	int p1 = ((y * 2 + 0) * w + x * 2 + 1) * 3;
+	int p2 = ((y * 2 + 1) * w + x * 2 + 0) * 3;
+	int p3 = ((y * 2 + 1) * w + x * 2 + 1) * 3;
+
+	int r = (frame_buf[p0 * 3 + 0] + frame_buf[p1 * 3 + 0] + frame_buf[p2 * 3 + 0] + frame_buf[p3 * 3 + 0]) / 4;
+	int g = (frame_buf[p0 * 3 + 1] + frame_buf[p1 * 3 + 1] + frame_buf[p2 * 3 + 1] + frame_buf[p3 * 3 + 1]) / 4;
+	int b = (frame_buf[p0 * 3 + 2] + frame_buf[p1 * 3 + 2] + frame_buf[p2 * 3 + 2] + frame_buf[p3 * 3 + 2]) / 4;
+
+	pbo_buf[i_pixel * 3 + 0] = glm::clamp(r, 0, 255);
+	pbo_buf[i_pixel * 3 + 1] = glm::clamp(g, 0, 255);
+	pbo_buf[i_pixel * 3 + 2] = glm::clamp(b, 0, 255);
+}
+
 }
 
 
 
 CUPix::CUPix(int window_w, int window_h, GLuint pbo, bool record = false)
-	: window_w_(window_w), window_h_(window_h), record_(record) {
-	frame_ = new unsigned char[window_w_ * window_h_ * 3];
-	cudaMalloc(&depth_buf_, sizeof(float) * window_w_ * window_h_);
-	// cudaMalloc(&frame_buf_, sizeof(float) * window_w_ * window_h_);
-	cudaMemcpyToSymbol(cu::w, &window_w_, sizeof(int));
-	cudaMemcpyToSymbol(cu::h, &window_h_, sizeof(int));
+	: window_w_(window_w), window_h_(window_h), frame_w_(window_w), frame_h_(window_h)
+	, record_(record) {
+	if(ssaa_) {
+		frame_w_ *= 2;
+		frame_h_ *= 2;
+	}
+	display_frame_ = new unsigned char[window_w_ * window_h_ * 3];
+	cudaMalloc(&depth_buf_, sizeof(float) * frame_w_ * frame_h_);
+	cudaMalloc(&frame_buf_, frame_w_ * frame_h_ * 3);
+	cudaMemcpyToSymbol(cu::w, &frame_w_, sizeof(int));
+	cudaMemcpyToSymbol(cu::h, &frame_h_, sizeof(int));
 	cudaGraphicsGLRegisterBuffer(&pbo_resource_, pbo, cudaGraphicsMapFlagsNone);
 
 	FILE *zb16_file = fopen("../font/zb16.data", "rb");
@@ -218,9 +244,10 @@ CUPix::CUPix(int window_w, int window_h, GLuint pbo, bool record = false)
 }
 
 CUPix::~CUPix() {
-	delete[] frame_;
+	delete[] triangle_;
+	delete[] display_frame_;
 	cudaFree(depth_buf_);
-	// cudaFree(frame_buf_);
+	cudaFree(frame_buf_);
 	cudaGraphicsUnregisterResource(pbo_resource_);
 }
 
@@ -228,12 +255,13 @@ void CUPix::MapResources() {
 	size_t size;
 	cudaGraphicsMapResources(1, &pbo_resource_, NULL);
 	cudaGraphicsResourceGetMappedPointer((void**)&pbo_buf_, &size, pbo_resource_);
-	frame_buf_ = pbo_buf_;
+	// frame_buf_ = pbo_buf_;
 }
 
 void CUPix::UnmapResources() {
-	if(record_)
-		cudaMemcpy(frame_, frame_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
+	if(ssaa_) cu::DownSample<<<dim3((window_w_-1)/32+1, (window_h_-1)/32+1), dim3(32, 32)>>>(frame_buf_, pbo_buf_);
+	else cudaMemcpy(pbo_buf_, frame_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToDevice);
+	if(record_) cudaMemcpy(display_frame_, pbo_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
 	cudaGraphicsUnmapResources(1, &pbo_resource_, NULL);
 }
 
@@ -245,7 +273,10 @@ void CUPix::Enable(Flag flag) {
 		case BLEND:
 			cudaMemcpyToSymbol(cu::blend, &b, 1); return;
 		case CULL_FACE:
-			cull_ = b;
+			cull_ = b; return;
+		case SSAA:
+			ssaa_ = b; return;
+
 	}
 }
 
@@ -258,6 +289,8 @@ void CUPix::Disable(Flag flag) {
 			cudaMemcpyToSymbol(cu::blend, &b, 1); return;
 		case CULL_FACE:
 			cull_ = b; return;
+		case SSAA:
+			ssaa_ = b; return;
 	}
 }
 
@@ -277,7 +310,7 @@ void CUPix::ClearColor(float r, float g, float b, float a) {
 }
 
 void CUPix::Clear() {
-	cu::Clear<<<dim3((window_w_-1)/32+1, (window_h_-1)/32+1), dim3(32, 32)>>>(frame_buf_, depth_buf_);
+	cu::Clear<<<dim3((frame_w_-1)/32+1, (frame_h_-1)/32+1), dim3(32, 32)>>>(frame_buf_, depth_buf_);
 }
 
 void CUPix::Draw() {
@@ -314,12 +347,17 @@ void CUPix::VertexData(int size, float *position, float *normal, float *uv) {
 		v[i].color = glm::vec3(rand() / RAND_MAX, rand() / RAND_MAX, rand() / RAND_MAX);
 		v[i].uv = glm::vec2(uv[i * 2], uv[i * 2 + 1]);
 	}
+	cudaFree(vertex_in_);
 	cudaMalloc(&vertex_in_, sizeof(v));
 	cudaMemcpy(vertex_in_, v, sizeof(v), cudaMemcpyHostToDevice);
-	cudaMalloc(&vertex_buf_, sizeof(Vertex) * n_vertex_);
-	cudaMalloc(&triangle_buf_, sizeof(Triangle) * n_triangle_);
-	triangle_ = new Triangle[n_triangle_];
+	cudaFree(vertex_out_);
 	cudaMalloc(&vertex_out_, sizeof(VertexOut) * n_vertex_);
+	cudaFree(vertex_buf_);
+	cudaMalloc(&vertex_buf_, sizeof(Vertex) * n_vertex_);
+	cudaFree(triangle_buf_);
+	cudaMalloc(&triangle_buf_, sizeof(Triangle) * n_triangle_);
+	delete[] triangle_;
+	triangle_ = new Triangle[n_triangle_];
 	cudaMemcpyToSymbol(cu::n_triangle, &n_triangle_, sizeof(int));
 }
 
@@ -345,6 +383,7 @@ void CUPix::Texture(unsigned char *d, int w, int h, bool gamma_correction) {
 		data[i * 4 + 3] = 0;
 	}
 	size_t pitch;
+	cudaFree(texture_buf_);
 	cudaMallocPitch((void**)&texture_buf_, &pitch, w * 4, h);
 	cudaMemcpy2D(
 		texture_buf_, pitch,

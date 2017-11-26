@@ -69,8 +69,10 @@ int main(int argc, char *argv[]) {
 	bool record = false;
 	if(argc == 3) record = true;
 
-	int window_w = 1280;
-	int window_h = 720;
+	// int window_w = 1280;
+	// int window_h = 720;
+	int window_w = 640;
+	int window_h = 360;
 
 	GLFWwindow* window = InitGLFW(window_w, window_h);
 	GLuint pbo = InitGL(window_w, window_h);

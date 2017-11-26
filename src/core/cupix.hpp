@@ -32,6 +32,7 @@ enum Flag : unsigned char {
 	DEPTH_TEST,
 	BLEND,
 	CULL_FACE,
+	SSAA,
 };
 
 struct VertexIn {
@@ -69,23 +70,23 @@ class CUPix {
 	cudaGraphicsResource *pbo_resource_;
 	unsigned char *pbo_buf_;
 	bool record_;
-	unsigned char *frame_;
+	unsigned char *display_frame_;
 
-	glm::vec4 clear_color_;
+	int frame_w_, frame_h_;
+	bool ssaa_ = false;
 	bool cull_ = true;
 	Face cull_face_ = BACK;
 	Winding front_face_ = CCW;
-
 	int n_triangle_, n_vertex_;
-	Triangle *triangle_;
-
-	VertexIn *vertex_in_;
-	VertexOut *vertex_out_;
-	Vertex *vertex_buf_;
-	Triangle *triangle_buf_;
+	Triangle *triangle_ = NULL;
 	unsigned char *frame_buf_;
 	float *depth_buf_;
-	unsigned char *texture_buf_;
+
+	VertexIn *vertex_in_ = NULL;
+	VertexOut *vertex_out_ = NULL;
+	Vertex *vertex_buf_ = NULL;
+	Triangle *triangle_buf_ = NULL;
+	unsigned char *texture_buf_ = NULL;
 
 public:
 	CUPix(int window_w, int window_h, unsigned int buffer, bool record);
@@ -108,7 +109,7 @@ public:
 	void Light(int n, cu::Light *light);
 	void Toggle(bool toggle);
 	unsigned char* frame() {
-		return frame_;
+		return display_frame_;
 	}
 };
 
