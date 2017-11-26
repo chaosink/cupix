@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ -z "$1" ]; then
+	echo "Usage: raw2mp4.sh video.raw"
+	exit
+fi
+
 ffmpeg \
 	-f rawvideo \
 	-pixel_format rgb24 \
@@ -8,4 +13,4 @@ ffmpeg \
 	-strict -2 \
 	-i $1 \
 	-vf "vflip" \
-	$2
+	${1%raw}mp4

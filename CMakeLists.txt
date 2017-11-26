@@ -54,5 +54,4 @@ target_link_libraries(cupix
 	${OPENGL_gl_LIBRARY}
 )
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/util/raw2mp4.sh
-	DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/util/raw2mp4.sh ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)

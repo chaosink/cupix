@@ -23,8 +23,8 @@ void VertexShader(VertexIn &in, VertexOut &out, Vertex &v) {
 	m = *((mat4*)mv);
 	out.position = m * vec4(in.position, 1.f);
 	out.normal   = m * vec4(in.normal, 0.f);
-	out.color    = in.color;
-	out.uv       = in.uv;
+	out.color	= in.color;
+	out.uv	   = in.uv;
 }
 
 __device__
@@ -87,13 +87,37 @@ vec4 Lighting(FragmentIn &in) {
 	return c;
 }
 
-__device__
+__device__ // https://www.shadertoy.com/view/Xt2czt
 vec4 FlickeringDots(FragmentIn &in) {
 	vec2 fragCoord(in.coord.x, in.coord.y);
 	vec2 iResolution(w, h);
 	vec2 uv = fragCoord - iResolution / 2.f;
 	float d = dot(uv, uv);
 	return vec4(0.5f + 0.5f * cos(d / 5.f + 10.f * time));
+}
+
+__device__ // https://www.shadertoy.com/view/lljSDy
+vec4 Quadtree(vec2 U) {
+	vec4 o;
+	o -= o;
+	float r=.1f, t=time, H = h;
+	U /=  H;							// object : disc(P,r)
+	vec2 P = .5f+.5f*vec2(cos(t),sin(t*.7f)), fU;
+	U*=.5f; P*=.5f;						// unzoom for the whole domain falls within [0,1]^n
+	o.b = .25f;							// backgroud = cold blue
+	for (int i=0; i<7; i++) {			// to the infinity, and beyond ! :-)
+		fU = min(U,1.f-U); if (min(fU.x,fU.y) < 3.f*r/H) { o--; break; } // cell border
+		if (length(P-.5f) - r > .7f) break; // cell is out of the shape
+				// --- iterate to child cell
+		fU = step(.5f,U);				// select child
+		U = 2.f*U - fU;					// go to new local frame
+		P = 2.f*P - fU;  r *= 2.f;
+
+		o += .13f;						// getting closer, getting hotter
+	}
+	o.g *= smoothstep(.9f,1.f,length(P-U)/r); // draw object
+	o.b *= smoothstep(.9f,1.f,length(P-U)/r);
+	return o;
 }
 
 __device__
@@ -108,8 +132,11 @@ void FragmentShader(FragmentIn &in, vec4 &color) {
 	/********** Texture sampling **********/
 	// float4 c = tex2D(texture, in.uv.s, 1 - in.uv.t);
 
-	/********** Shadertoy effect **********/
+	/********** Shadertoy - Flickering Dots **********/
 	vec4 c = FlickeringDots(in);
+
+	/********** Shadertoy - Quadtree **********/
+	// vec4 c = Quadtree(vec2(in.coord));
 
 	/********** Phong/Blinn-Phong shading **********/
 	// vec4 c = Lighting(in);
