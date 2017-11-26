@@ -17,6 +17,12 @@ struct Light {
 
 const double PI  = 3.14159265358979323846;
 
+enum AA : unsigned char {
+	NOAA,
+	MSAA,
+	SSAA
+};
+
 enum Winding : unsigned char {
 	CCW,
 	CW
@@ -32,7 +38,6 @@ enum Flag : unsigned char {
 	DEPTH_TEST,
 	BLEND,
 	CULL_FACE,
-	SSAA,
 };
 
 struct VertexIn {
@@ -73,7 +78,7 @@ class CUPix {
 	unsigned char *display_frame_;
 
 	int frame_w_, frame_h_;
-	bool ssaa_ = false;
+	AA aa_ = NOAA;
 	bool cull_ = true;
 	Face cull_face_ = BACK;
 	Winding front_face_ = CCW;
@@ -89,7 +94,7 @@ class CUPix {
 	unsigned char *texture_buf_ = NULL;
 
 public:
-	CUPix(int window_w, int window_h, unsigned int buffer, bool record);
+	CUPix(int window_w, int window_h, unsigned int buffer, AA aa, bool record);
 	~CUPix();
 	void MapResources();
 	void UnmapResources();

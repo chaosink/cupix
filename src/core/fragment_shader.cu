@@ -73,10 +73,10 @@ vec4 Lighting(FragmentIn &in) {
 	vec4 c;
 	for(int i = 0; i < n_light; i++) {
 		Light l = light[i];
-		if(i == 0) { // move light 0
-			l.position[0] = sinf(time) * 4.f;
-			l.position[2] = cosf(time) * 4.f;
-		}
+		// if(i == 0) { // move light 0
+		// 	l.position[0] = sinf(time) * 4.f;
+		// 	l.position[2] = cosf(time) * 4.f;
+		// }
 		c += BlinnPhong(in, l);
 	}
 	return c;
@@ -86,7 +86,7 @@ __device__
 void FragmentShader(FragmentIn &in, vec4 &color) {
 	/********** Visualization of normal **********/
 	// vec4 c = vec4(in.normal, 0.f);
-	vec4 c = vec4(in.normal * 0.5f + 0.5f, 0.5f); // normalized
+	// vec4 c = vec4(in.normal * 0.5f + 0.5f, 0.5f); // normalized
 
 	/********** Visualization of uv **********/
 	// vec4 c = vec4(in.uv, 0.f, 0.f);
@@ -103,7 +103,7 @@ void FragmentShader(FragmentIn &in, vec4 &color) {
 	// vec4 c = Sunflower(in.coord);
 	// vec4 c = Mandeltunnel(in.coord);
 	// vec4 c = MandelbrotsDarkerSide(in.coord);
-	// vec4 c = DeformFlower(in.coord);
+	vec4 c = DeformFlower(in.coord);
 	// vec4 c = Heart2D(in.coord);
 
 	/********** Output color **********/

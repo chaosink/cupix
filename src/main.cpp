@@ -69,15 +69,15 @@ int main(int argc, char *argv[]) {
 	bool record = false;
 	if(argc == 3) record = true;
 
-	// int window_w = 1280;
-	// int window_h = 720;
-	int window_w = 640;
-	int window_h = 360;
+	int window_w = 1280;
+	int window_h = 720;
+	// int window_w = 640;
+	// int window_h = 360;
 
 	GLFWwindow* window = InitGLFW(window_w, window_h);
 	GLuint pbo = InitGL(window_w, window_h);
 
-	CUPix pix(window_w, window_h, pbo, record);
+	CUPix pix(window_w, window_h, pbo, NOAA, record);
 	pix.ClearColor(0.08f, 0.16f, 0.24f, 1.f);
 	// pix.Enable(CULL_FACE);
 	// pix.CullFace(BACK);
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
 		glm::mat4 mv = v * m;
 		pix.MV(mv);
 
-		pix.Time(glfwGetTime());
+		pix.Time(20);
 		pix.Toggle(toggle.Update([] {
 			printf("\nUse Blinn-Phong shading\n");
 		}, [] {
