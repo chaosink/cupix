@@ -215,7 +215,7 @@ void RasterizeMSAA(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, 
 }
 
 __global__
-void DrawFont(int ch, int x0, int y0, bool ssaa, unsigned char *frame_buf) {
+void DrawCharater(int ch, int x0, int y0, bool ssaa, unsigned char *frame_buf) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	int y = threadIdx.y + blockIdx.y * blockDim.y;
 	int i_pixel = w * (y + y0) + x + x0;

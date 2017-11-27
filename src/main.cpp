@@ -120,8 +120,7 @@ int main(int argc, char *argv[]) {
 			printf("\nUse Blinn-Phong shading\n");
 		}, [] {
 			printf("\nUse Phong shading\n");
-		}
-		));
+		}));
 
 		pix.Draw();
 		pix.DrawFPS(fps.Update() + 0.5f);

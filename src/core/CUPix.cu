@@ -30,7 +30,7 @@ __global__ void WindowSpace(Vertex *v);
 __global__ void AssemTriangle(Vertex *v, Triangle *triangle);
 __global__ void Rasterize(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, float *depth_buf, unsigned char* frame_buf);
 __global__ void RasterizeMSAA(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, float *depth_buf, unsigned char* frame_buf);
-__global__ void Font(int ch, int x0, int y0, bool ssaa, unsigned char *frame_buf);
+__global__ void DrawCharater(int ch, int x0, int y0, bool ssaa, unsigned char *frame_buf);
 __global__ void DownSample(unsigned char *frame_buf, unsigned char *pbo_buf);
 
 }
@@ -43,7 +43,7 @@ CUPix::CUPix(int window_w, int window_h, GLuint pbo, AA aa = NOAA, bool record =
 		frame_w_ *= 2;
 		frame_h_ *= 2;
 	}
-	display_frame_ = new unsigned char[window_w_ * window_h_ * 3];
+	frame_ = new unsigned char[window_w_ * window_h_ * 3];
 	cudaMalloc(&depth_buf_, sizeof(float) * frame_w_ * frame_h_);
 	cudaMalloc(&frame_buf_, frame_w_ * frame_h_ * 3);
 	cudaMemcpyToSymbol(core::w, &frame_w_, sizeof(int));
@@ -60,7 +60,7 @@ CUPix::CUPix(int window_w, int window_h, GLuint pbo, AA aa = NOAA, bool record =
 
 CUPix::~CUPix() {
 	delete[] triangle_;
-	delete[] display_frame_;
+	delete[] frame_;
 	cudaFree(depth_buf_);
 	cudaFree(frame_buf_);
 	cudaGraphicsUnregisterResource(pbo_resource_);
@@ -75,7 +75,7 @@ void CUPix::MapResources() {
 void CUPix::UnmapResources() {
 	if(aa_ != NOAA) core::DownSample<<<dim3((window_w_-1)/32+1, (window_h_-1)/32+1), dim3(32, 32)>>>(frame_buf_, pbo_buf_);
 	else cudaMemcpy(pbo_buf_, frame_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToDevice);
-	if(record_) cudaMemcpy(display_frame_, pbo_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
+	if(record_) cudaMemcpy(frame_, pbo_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
 	cudaGraphicsUnmapResources(1, &pbo_resource_, NULL);
 }
 
@@ -139,12 +139,12 @@ void CUPix::Draw() {
 
 void CUPix::DrawFPS(int fps) {
 	bool aa = aa_ != NOAA;
-	core::DrawFont<<<1, dim3(16, 16)>>>('F',  0, 0, aa, frame_buf_);
-	core::DrawFont<<<1, dim3(16, 16)>>>('P', 16, 0, aa, frame_buf_);
-	core::DrawFont<<<1, dim3(16, 16)>>>('S', 32 - 3, 0, aa, frame_buf_);
-	core::DrawFont<<<1, dim3(16, 16)>>>(fps % 1000 / 100 + 48, 48 + 5, 0, aa, frame_buf_);
-	core::DrawFont<<<1, dim3(16, 16)>>>(fps % 100 / 10   + 48, 64 + 5, 0, aa, frame_buf_);
-	core::DrawFont<<<1, dim3(16, 16)>>>(fps % 10         + 48, 80 + 5, 0, aa, frame_buf_);
+	core::DrawCharater<<<1, dim3(16, 16)>>>('F',  0, 0, aa, frame_buf_);
+	core::DrawCharater<<<1, dim3(16, 16)>>>('P', 16, 0, aa, frame_buf_);
+	core::DrawCharater<<<1, dim3(16, 16)>>>('S', 32 - 3, 0, aa, frame_buf_);
+	core::DrawCharater<<<1, dim3(16, 16)>>>(fps % 1000 / 100 + 48, 48 + 5, 0, aa, frame_buf_);
+	core::DrawCharater<<<1, dim3(16, 16)>>>(fps % 100 / 10   + 48, 64 + 5, 0, aa, frame_buf_);
+	core::DrawCharater<<<1, dim3(16, 16)>>>(fps % 10         + 48, 80 + 5, 0, aa, frame_buf_);
 }
 
 void CUPix::VertexData(int size, float *position, float *normal, float *uv) {

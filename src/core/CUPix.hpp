@@ -65,7 +65,7 @@ class CUPix {
 	cudaGraphicsResource *pbo_resource_;
 	unsigned char *pbo_buf_;
 	bool record_;
-	unsigned char *display_frame_;
+	unsigned char *frame_;
 
 	int frame_w_, frame_h_;
 	AA aa_ = NOAA;
@@ -104,7 +104,7 @@ public:
 	void Lights(int n, Light *light);
 	void Toggle(bool toggle);
 	unsigned char* frame() {
-		return display_frame_;
+		return frame_;
 	}
 };
 
