@@ -28,20 +28,20 @@ The details will be listed...
 
 * lighting, Phong / Blinn-Phong shading
 
-![suzanne_low_Phong.png](result/image/lighting/suzanne_low_Phong.png)
+![torus_smooth_Blinn.png](result/image/lighting/torus_smooth_Blinn-Phong.png)
 
 ![cow_smooth_Blinn-Phong.png](result/image/lighting/cow_smooth_Blinn-Phong.png)
 
-* anti-aliasing
+* AA
 
 No AA
-![suzanne_normal_noaa.png](result/image/aa/suzanne_normal_noaa.png)
+![suzanne_2_light_noaa.png](result/image/aa/suzanne_2_light_noaa.png)
 
 MSAA
-![suzanne_normal_msaa.png](result/image/aa/suzanne_normal_msaa.png)
+![suzanne_2_light_msaa.png](result/image/aa/suzanne_2_light_msaa.png)
 
 SSAA
-![suzanne_normal_ssaa.png](result/image/aa/suzanne_normal_ssaa.png)
+![suzanne_2_light_ssaa.png](result/image/aa/suzanne_2_light_ssaa.png)
 
 * Shadertoy
 
