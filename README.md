@@ -14,11 +14,11 @@ The details will be listed...
 
 * face culling
 
-![cull_cube_back.png](result/image/face_culling/cull_cube_back.png)
+![cull_cube_front_back.png](result/image/face_culling/cull_cube_front_back.png)
 
 ![cull_cube_front.png](result/image/face_culling/cull_cube_front.png)
 
-![cull_cube_front_back.png](result/image/face_culling/cull_cube_front_back.png)
+![cull_cube_back.png](result/image/face_culling/cull_cube_back.png)
 
 * Gamma correction
 
