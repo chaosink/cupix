@@ -31,11 +31,10 @@ Camera::Camera(GLFWwindow *window, int window_w, int window_h)
 	: window_(window), window_w_(window_w), window_h_(window_h) {
 	glfwSetScrollCallback(window, ScrollCallback);
 	glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwGetCursorPos(window_, &x_old_, &y_old_);
-	Update();
+	glfwGetCursorPos(window_, &x_, &y_);
 }
 
-glm::mat4 Camera::Update() {
+glm::mat4 Camera::Update(double time) {
 	fix_.Update([this]{
 		vp_ = glm::mat4(
 			1.357115, 0.061360, 0.025538, 0.025487,
@@ -50,18 +49,19 @@ glm::mat4 Camera::Update() {
 			0.035693, 0.209425, -2.724669, 1.000000
 		);
 	}, [this]{
-		glfwGetCursorPos(window_, &x_old_, &y_old_);
+		glfwGetCursorPos(window_, &x_, &y_);
 	});
 	if(fix_.state()) return vp_;
 
-	time_new_ = glfwGetTime();
-	float time = time_new_ - time_old_;
+	float delta_time = time - time_;
+	time_ = time;
 
 	double x, y;
 	glfwGetCursorPos(window_, &x, &y);
-
-	angle_horizontal_ += mouse_speed_ * float(x_old_ - x);
-	angle_vertical_   += mouse_speed_ * float(y_old_ - y);
+	angle_horizontal_ += mouse_speed_ * float(x_ - x);
+	angle_vertical_   += mouse_speed_ * float(y_ - y);
+	x_ = x;
+	y_ = y;
 
 	// Direction: Spherical coordinates to Cartesian coordinates conversion
 	glm::vec3 direction(
@@ -82,19 +82,19 @@ glm::mat4 Camera::Update() {
 
 	// forward
 	if(glfwGetKey(window_, GLFW_KEY_W) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_UP) == GLFW_PRESS) {
-		position_ += direction * time * speed_;
+		position_ += delta_time * speed_ * direction;
 	}
 	// backward
 	if(glfwGetKey(window_, GLFW_KEY_S) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_DOWN) == GLFW_PRESS) {
-		position_ -= direction * time * speed_;
+		position_ -= delta_time * speed_ * direction;
 	}
 	// right
 	if(glfwGetKey(window_, GLFW_KEY_D) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-		position_ += right * time * speed_;
+		position_ += delta_time * speed_ * right;
 	}
 	// left
 	if(glfwGetKey(window_, GLFW_KEY_A) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_LEFT) == GLFW_PRESS) {
-		position_ -= right * time * speed_;
+		position_ -= delta_time * speed_ * right;
 	}
 	if(glfwGetKey(window_, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
 		speed_ += 1;
@@ -113,7 +113,7 @@ glm::mat4 Camera::Update() {
 		PrintMat(v_, "\t\t", "v_");
 	});
 
-	fov_ += scoll * time * scroll_speed_;
+	fov_ += delta_time * scroll_speed_ * scoll;
 	scoll = 0;
 	// Camera matrix
 	v_ = glm::lookAt(
@@ -123,10 +123,6 @@ glm::mat4 Camera::Update() {
 	// Projection matrix: 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 	p_ = glm::perspective(fov_, float(window_w_) / window_h_, 0.1f, 100.f);
 	vp_ = p_ * v_;
-
-	time_old_ = time_new_;
-	x_old_ = x;
-	y_old_ = y;
 
 	return vp_;
 }

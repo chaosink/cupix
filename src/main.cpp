@@ -99,16 +99,19 @@ int main(int argc, char *argv[]) {
 	Texture texture("../texture/uv.png");
 	pix.Texture(texture.data(), texture.w(), texture.h(), false); // gamma_correction = false
 
+	double time = glfwGetTime();
 	Camera camera(window, window_w, window_h);
-	FPS fps;
+	FPS fps(time);
 	Toggle toggle(window, GLFW_KEY_T, true);
 	Video video(window_w, window_h);
 	while(glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window)) {
+		time = glfwGetTime();
+
 		pix.MapResources();
 		pix.Clear();
 
 		glm::mat4 m;
-		glm::mat4 vp = camera.Update();
+		glm::mat4 vp = camera.Update(time);
 		glm::mat4 mvp = vp * m;
 		pix.MVP(mvp);
 		glm::mat4 v = camera.v();
@@ -123,7 +126,7 @@ int main(int argc, char *argv[]) {
 		}));
 
 		pix.Draw();
-		pix.DrawFPS(fps.Update() + 0.5f);
+		pix.DrawFPS(fps.Update(time) + 0.5f);
 		pix.UnmapResources();
 
 		UpdateGL(window, window_w, window_h);

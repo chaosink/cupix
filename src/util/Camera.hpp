@@ -30,8 +30,8 @@ class Camera {
 	float mouse_speed_ = 0.002f;
 	float scroll_speed_ = 2.f;
 
-	double time_old_ = glfwGetTime(), time_new_;
-	double x_old_, y_old_;
+	double time_;;
+	double x_, y_;
 
 	Toggle fix_ = Toggle(window_, GLFW_KEY_F, false);
 	Toggle print_vp_ = Toggle(window_, GLFW_KEY_P, false);
@@ -47,5 +47,5 @@ public:
 	glm::mat4 vp() {
 		return vp_;
 	}
-	glm::mat4 Update();
+	glm::mat4 Update(double time);
 };

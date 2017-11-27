@@ -179,8 +179,7 @@ void CUPix::MV(glm::mat4 &mv) {
 	cudaMemcpyToSymbol(core::mv, &mv, sizeof(glm::mat4));
 }
 
-void CUPix::Time(double time) {
-	float t = time;
+void CUPix::Time(float time) {
 	cudaMemcpyToSymbol(core::time, &t, sizeof(float));
 }
 

@@ -99,7 +99,7 @@ public:
 	void VertexData(int size, float *position, float *normal, float *uv);
 	void MVP(glm::mat4 &mvp);
 	void MV(glm::mat4 &mv);
-	void Time(double time);
+	void Time(float time);
 	void Texture(unsigned char *data, int w, int h, bool gamma_correction);
 	void Lights(int n, Light *light);
 	void Toggle(bool toggle);
