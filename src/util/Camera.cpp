@@ -96,10 +96,10 @@ glm::mat4 Camera::Update(double time) {
 	if(glfwGetKey(window_, GLFW_KEY_A) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_LEFT) == GLFW_PRESS) {
 		position_ -= delta_time * speed_ * right;
 	}
-	if(glfwGetKey(window_, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
+	if(glfwGetKey(window_, GLFW_KEY_EQUAL) == GLFW_PRESS) {
 		speed_ += 1;
 	}
-	if(glfwGetKey(window_, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
+	if(glfwGetKey(window_, GLFW_KEY_MINUS) == GLFW_PRESS) {
 		speed_ -= 1;
 	}
 	if(glfwGetKey(window_, GLFW_KEY_SPACE) == GLFW_PRESS) {

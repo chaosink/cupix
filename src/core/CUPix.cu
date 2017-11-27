@@ -180,7 +180,7 @@ void CUPix::MV(glm::mat4 &mv) {
 }
 
 void CUPix::Time(float time) {
-	cudaMemcpyToSymbol(core::time, &t, sizeof(float));
+	cudaMemcpyToSymbol(core::time, &time, sizeof(float));
 }
 
 void CUPix::Texture(unsigned char *d, int w, int h, bool gamma_correction) {
