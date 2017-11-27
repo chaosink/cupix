@@ -30,6 +30,7 @@ set(CUDA_SEPARABLE_COMPILATION ON)
 
 include_directories(
 	src/core
+	src/utility
 	src/thirdparty
 	src/thirdparty/glew-2.1.0/include
 	src/thirdparty/glfw-3.2.1/include
@@ -47,12 +48,12 @@ cuda_add_library(core
 
 cuda_add_executable(cupix
 	src/main.cpp
-	src/util/Camera.cpp
-	src/util/Model.cpp
-	src/util/FPS.cpp
-	src/util/Texture.cpp
-	src/util/Video.cpp
-	src/util/Toggle.cpp
+	src/utility/Camera.cpp
+	src/utility/Model.cpp
+	src/utility/FPS.cpp
+	src/utility/Texture.cpp
+	src/utility/Video.cpp
+	src/utility/Toggle.cpp
 )
 target_link_libraries(cupix
 	core
@@ -62,4 +63,4 @@ target_link_libraries(cupix
 	${OPENGL_gl_LIBRARY}
 )
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/util/raw2mp4.sh ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/utility/raw2mp4.sh ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)

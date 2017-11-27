@@ -5,12 +5,12 @@ using namespace std;
 #include <GLFW/glfw3.h>
 
 #include "CUPix.hpp"
-#include "util/Model.hpp"
-#include "util/Texture.hpp"
-#include "util/Camera.hpp"
-#include "util/FPS.hpp"
-#include "util/Video.hpp"
-#include "util/Toggle.hpp"
+#include "Model.hpp"
+#include "Texture.hpp"
+#include "Camera.hpp"
+#include "FPS.hpp"
+#include "Video.hpp"
+#include "Toggle.hpp"
 
 using namespace cupix;
 
