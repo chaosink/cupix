@@ -2,7 +2,7 @@
 
 namespace cupix {
 
-namespace cu {
+namespace core {
 
 extern __constant__ __device__ float mvp[16];
 extern __constant__ __device__ float mv[16];

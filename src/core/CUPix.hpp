@@ -25,7 +25,6 @@ enum Flag : unsigned char {
 	CULL_FACE,
 };
 
-
 struct VertexIn {
 	glm::vec3 position;
 	glm::vec3 normal;

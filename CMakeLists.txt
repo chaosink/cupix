@@ -39,6 +39,7 @@ include_directories(
 
 cuda_add_library(core
 	src/core/CUPix.cu
+	src/core/CUPixCore.cu
 	src/core/VertexShader.cu
 	src/core/FragmentShader.cu
 	src/core/Shadertoy.cu
