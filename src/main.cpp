@@ -4,13 +4,13 @@ using namespace std;
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "cupix.hpp"
-#include "util/model.hpp"
-#include "util/texture.hpp"
-#include "util/camera.hpp"
-#include "util/fps.hpp"
-#include "util/video.hpp"
-#include "util/toggle.hpp"
+#include "CUPix.hpp"
+#include "util/Model.hpp"
+#include "util/Texture.hpp"
+#include "util/Camera.hpp"
+#include "util/FPS.hpp"
+#include "util/Video.hpp"
+#include "util/Toggle.hpp"
 
 using namespace cupix;
 

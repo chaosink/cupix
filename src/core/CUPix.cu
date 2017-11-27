@@ -1,9 +1,6 @@
+#include "CUPix.hpp"
+
 #include <cstdio>
-#include <iostream>
-using namespace std;
-
-#include "cupix.hpp"
-
 #include <cuda_gl_interop.h>
 
 namespace cupix {
@@ -293,7 +290,7 @@ CUPix::CUPix(int window_w, int window_h, GLuint pbo, AA aa = NOAA, bool record =
 	cudaMemcpyToSymbol(cu::h, &frame_h_, sizeof(int));
 	cudaGraphicsGLRegisterBuffer(&pbo_resource_, pbo, cudaGraphicsMapFlagsNone);
 
-	// bitmap font
+	// load bitmap fonts into GPU memory
 	FILE *zb16_file = fopen("../font/zb16.data", "rb");
 	char zb16[cu::zb16_file_size];
 	size_t r = fread(zb16, 1, cu::zb16_file_size, zb16_file);

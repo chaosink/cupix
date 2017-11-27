@@ -1,4 +1,4 @@
-#include "cupix.hpp"
+#include "CUPix.hpp"
 
 namespace cupix {
 

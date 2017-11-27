@@ -1,6 +1,6 @@
-#include <cstdio>
+#include "Camera.hpp"
 
-#include "camera.hpp"
+#include <cstdio>
 #include <glm/gtc/matrix_transform.hpp>
 
 static double scoll = 0;

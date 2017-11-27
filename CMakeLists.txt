@@ -38,15 +38,20 @@ include_directories(
 )
 
 cuda_add_library(core
-	src/core/cupix.cu
-	src/core/vertex_shader.cu
-	src/core/fragment_shader.cu
-	src/core/shadertoy.cu
+	src/core/CUPix.cu
+	src/core/VertexShader.cu
+	src/core/FragmentShader.cu
+	src/core/Shadertoy.cu
 )
 
 cuda_add_executable(cupix
 	src/main.cpp
-	src/util/camera.cpp
+	src/util/Camera.cpp
+	src/util/Model.cpp
+	src/util/FPS.cpp
+	src/util/Texture.cpp
+	src/util/Video.cpp
+	src/util/Toggle.cpp
 )
 target_link_libraries(cupix
 	core
