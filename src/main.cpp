@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
 	Model model(argv[1]);
 	pix.VertexData(model.n_vertex(), model.vertex(), model.normal(), model.uv());
 
-	Texture texture("../texture/uv.png");
+	Texture texture("../texture/texture.jpg");
 	pix.Texture(texture.data(), texture.w(), texture.h(), false); // gamma_correction = false
 
 	double time = glfwGetTime();

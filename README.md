@@ -26,6 +26,10 @@ The details will be listed...
 
 ![gamma_rgb_t.png](result/image/gamma_correction/gamma_rgb_t.png)
 
+* texture
+
+![texture_fruit.png](result/image/texture/texture_fruit.png)
+
 * lighting, Phong / Blinn-Phong shading
 
 ![torus_smooth_Blinn.png](result/image/lighting/torus_smooth_Blinn-Phong.png)
