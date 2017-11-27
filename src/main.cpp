@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
 	// pix.CullFace(BACK);
 	// pix.FrontFace(CW);
 
-	cu::Light light[2]{
+	Light light[2]{
 		 5.f, 4.f, 3.f, // position
 		 1.f, 1.f, 1.f, // color
 		20.f,           // power
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
 		 1.f, 1.f, 1.f, // color
 		30.f,           // power
 	};
-	pix.Light(2, light);
+	pix.Lights(2, light);
 
 	Model model(argv[1]);
 	pix.VertexData(model.n_vertex(), model.vertex(), model.normal(), model.uv());

@@ -456,9 +456,9 @@ void CUPix::Texture(unsigned char *d, int w, int h, bool gamma_correction) {
 	cudaBindTexture2D(NULL, cu::texture, texture_buf_, desc, w, h, pitch);
 }
 
-void CUPix::Light(int n, cu::Light *light) {
+void CUPix::Lights(int n, Light *light) {
 	cudaMemcpyToSymbol(cu::n_light, &n, sizeof(int));
-	cudaMemcpyToSymbol(cu::light, light, sizeof(cu::Light) * n);
+	cudaMemcpyToSymbol(cu::light, light, sizeof(Light) * n);
 }
 
 void CUPix::Toggle(bool toggle) {

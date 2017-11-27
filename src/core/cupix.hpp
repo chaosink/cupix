@@ -5,40 +5,26 @@
 
 namespace cupix {
 
-namespace cu{
-
-struct Light {
-	float position[3];
-	float color[3];
-	float power;
-};
-
-}
-
-const double PI  = 3.14159265358979323846;
-
 enum AA : unsigned char {
 	NOAA,
 	MSAA,
 	SSAA
 };
-
 enum Winding : unsigned char {
 	CCW,
 	CW
 };
-
 enum Face : unsigned char {
 	BACK,
 	FRONT,
 	FRONT_AND_BACK
 };
-
 enum Flag : unsigned char {
 	DEPTH_TEST,
 	BLEND,
 	CULL_FACE,
 };
+
 
 struct VertexIn {
 	glm::vec3 position;
@@ -68,6 +54,11 @@ struct FragmentIn {
 	glm::vec3 normal;
 	glm::vec3 color;
 	glm::vec2 uv;
+};
+struct Light {
+	float position[3];
+	float color[3];
+	float power;
 };
 
 class CUPix {
@@ -111,7 +102,7 @@ public:
 	void MV(glm::mat4 &mv);
 	void Time(double time);
 	void Texture(unsigned char *data, int w, int h, bool gamma_correction);
-	void Light(int n, cu::Light *light);
+	void Lights(int n, Light *light);
 	void Toggle(bool toggle);
 	unsigned char* frame() {
 		return display_frame_;

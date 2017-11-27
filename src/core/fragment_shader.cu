@@ -14,6 +14,7 @@ extern __constant__ __device__ bool toggle;
 
 using namespace glm;
 
+/********** Shadertoy **********/
 __device__ vec4 FlickeringDots(vec2);
 __device__ vec4 Quadtree(vec2);
 __device__ vec4 Sunflower(vec2);
