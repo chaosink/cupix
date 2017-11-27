@@ -74,10 +74,10 @@ vec4 Lighting(FragmentIn &in) {
 	vec4 c;
 	for(int i = 0; i < n_light; i++) {
 		Light l = light[i];
-		// if(i == 0) { // move light 0
-		// 	l.position[0] = sinf(time) * 4.f;
-		// 	l.position[2] = cosf(time) * 4.f;
-		// }
+		if(i == 0) { // move light 0
+			l.position[0] = sinf(time) * 4.f;
+			l.position[2] = cosf(time) * 4.f;
+		}
 		c += BlinnPhong(in, l);
 	}
 	return c;

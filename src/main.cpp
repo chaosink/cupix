@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
 		glm::mat4 mv = v * m;
 		pix.MV(mv);
 
-		pix.Time(20);
+		pix.Time(time);
 		pix.Toggle(toggle.Update([] {
 			printf("\nUse Blinn-Phong shading\n");
 		}, [] {
