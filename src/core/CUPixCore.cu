@@ -72,15 +72,16 @@ void AssemTriangle(Vertex *v, Triangle *triangle) {
 		iv_min = v_min + 0.5f,
 		iv_max = v_max + 0.5f;
 
+	triangle[x].empty = (iv_min.x >= w || iv_min.y >= h || iv_max.x < 0 || iv_max.y < 0
+		|| v[0].position.z > 1 && v[1].position.z > 1 && v[2].position.z > 1
+		|| v[0].position.z <-1 && v[1].position.z <-1 && v[2].position.z <-1);
+	triangle[x].winding = Winding((p1.x - p0.x) * (p2.y - p1.y) - (p1.y - p0.y) * (p2.x - p1.x) < 0);
+
 	iv_min = glm::clamp(iv_min, c0, c1);
 	iv_max = glm::clamp(iv_max, c0, c1);
 
 	triangle[x].v[0] = iv_min;
 	triangle[x].v[1] = iv_max;
-	triangle[x].winding = Winding((p1.x - p0.x) * (p2.y - p1.y) - (p1.y - p0.y) * (p2.x - p1.x) < 0);
-	triangle[x].empty = (iv_min.x > iv_max.x || iv_min.y > iv_max.y
-		|| v[0].position.z > 1 && v[1].position.z > 1 && v[2].position.z > 1
-		|| v[0].position.z <-1 && v[1].position.z <-1 && v[2].position.z <-1);
 }
 
 __device__
@@ -138,7 +139,7 @@ void Rasterize(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, floa
 		FragmentIn fragment = {glm::vec2(x, y)};
 		glm::vec3 e = glm::vec3(e0, e1, e2) / (e0 + e1 + e2);
 		Interpolate(v, va, e, &fragment);
-		if(fragment.z > 1 || fragment.z < -1) return;
+		if(fragment.z > 1 || fragment.z < -1) return; // need 3D clipping
 		if(!depth_test || 1 - fragment.z > depth_buf[i_pixel]) {
 			depth_buf[i_pixel] = 1 - fragment.z;
 			glm::vec4 color;
@@ -169,49 +170,74 @@ void RasterizeMSAA(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, 
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	int y = threadIdx.y + blockIdx.y * blockDim.y;
 	if(x >= dim.x || y >= dim.y) return;
-	x += corner.x;
-	y += corner.y;
+	x = (x + corner.x) * 2;
+	y = (y + corner.y) * 2;
 	if(x >= w || y >= h) return;
-	int i_pixel = y * w + x;
+
+	float e0, e1, e2;
 
 	glm::vec2
 		p0 = glm::vec2(v[0].position.x, v[0].position.y),
 		p1 = glm::vec2(v[1].position.x, v[1].position.y),
 		p2 = glm::vec2(v[2].position.x, v[2].position.y);
 	glm::vec2 d01 = p1 - p0, d12 = p2 - p1, d20 = p0 - p2;
-	float e0 = glm::dot(d12, glm::vec2(y + 0.5f - p1.y, p1.x - x - 0.5f));
-	float e1 = glm::dot(d20, glm::vec2(y + 0.5f - p2.y, p2.x - x - 0.5f));
-	float e2 = glm::dot(d01, glm::vec2(y + 0.5f - p0.y, p0.x - x - 0.5f));
-
-	if(e0 >= 0 && e1 >= 0 && e2 >= 0
-	|| e0 <= 0 && e1 <= 0 && e2 <= 0) {
-		FragmentIn fragment = {glm::vec2(x, y)};
-		glm::vec3 e = glm::vec3(e0, e1, e2) / (e0 + e1 + e2);
-		Interpolate(v, va, e, &fragment);
-		if(fragment.z > 1 || fragment.z < -1) return;
-		if(!depth_test || 1 - fragment.z > depth_buf[i_pixel]) {
-			depth_buf[i_pixel] = 1 - fragment.z;
-			glm::vec4 color;
-			FragmentShader(fragment, color);
-			glm::ivec4 icolor;
-			if(blend) {
-				float alpha = color.a;
-				glm::vec4 color_old = glm::vec4(
-					frame_buf[i_pixel * 3 + 0],
-					frame_buf[i_pixel * 3 + 1],
-					frame_buf[i_pixel * 3 + 2],
-					0.f
-				);
-				icolor = color * 255.f * alpha + color_old * (1.f - alpha);
-			} else {
-				icolor = color * 255.f;
+	bool cover[2][2];
+	bool covered = false;
+	for(int i = 0; i < 2; i++)
+		for(int j = 0; j < 2; j++) {
+			cover[i][j] = false;
+			int xx = x + j, yy = y + i;
+			int i_pixel = yy * w + xx;
+			e0 = glm::dot(d12, glm::vec2(yy + 0.5f - p1.y, p1.x - xx - 0.5f));
+			e1 = glm::dot(d20, glm::vec2(yy + 0.5f - p2.y, p2.x - xx - 0.5f));
+			e2 = glm::dot(d01, glm::vec2(yy + 0.5f - p0.y, p0.x - xx - 0.5f));
+			if(e0 >= 0 && e1 >= 0 && e2 >= 0
+			|| e0 <= 0 && e1 <= 0 && e2 <= 0) {
+				glm::vec3 e = glm::vec3(e0, e1, e2) / (e0 + e1 + e2);
+				float z = e.x * v[0].position.z + e.y * v[1].position.z + e.z * v[2].position.z;
+				if(z > 1 || z < -1) continue;
+				if(!depth_test || 1 - z > depth_buf[i_pixel]) {
+					depth_buf[i_pixel] = 1 - z;
+					cover[i][j] = covered = true;
+				}
 			}
-			icolor = glm::clamp(icolor, glm::ivec4(0), glm::ivec4(255));
-			frame_buf[i_pixel * 3 + 0] = icolor.r;
-			frame_buf[i_pixel * 3 + 1] = icolor.g;
-			frame_buf[i_pixel * 3 + 2] = icolor.b;
 		}
-	}
+	if(!covered) return;
+
+	float xx = x + 0.5f, yy = y + 0.5f;
+	e0 = glm::dot(d12, glm::vec2(yy + 0.5f - p1.y, p1.x - xx - 0.5f));
+	e1 = glm::dot(d20, glm::vec2(yy + 0.5f - p2.y, p2.x - xx - 0.5f));
+	e2 = glm::dot(d01, glm::vec2(yy + 0.5f - p0.y, p0.x - xx - 0.5f));
+
+	FragmentIn fragment = {glm::vec2(xx, yy)};
+	glm::vec3 e = glm::vec3(e0, e1, e2) / (e0 + e1 + e2);
+	Interpolate(v, va, e, &fragment);
+	// if(fragment.z > 1 || fragment.z < -1) return; // extrapolation may cause z not in [-1,1]
+	glm::vec4 color;
+	FragmentShader(fragment, color); // run fragment shader noly once
+	glm::ivec4 icolor;
+	for(int i = 0; i < 2; i++)
+		for(int j = 0; j < 2; j++)
+			if(cover[i][j]) {
+				int xx = x + j, yy = y + i;
+				int i_pixel = yy * w + xx;
+				if(blend) {
+					float alpha = color.a;
+					glm::vec4 color_old = glm::vec4(
+						frame_buf[i_pixel * 3 + 0],
+						frame_buf[i_pixel * 3 + 1],
+						frame_buf[i_pixel * 3 + 2],
+						0.f
+					);
+					icolor = color * 255.f * alpha + color_old * (1.f - alpha);
+				} else {
+					icolor = color * 255.f;
+				}
+				icolor = glm::clamp(icolor, glm::ivec4(0), glm::ivec4(255));
+				frame_buf[i_pixel * 3 + 0] = icolor.r;
+				frame_buf[i_pixel * 3 + 1] = icolor.g;
+				frame_buf[i_pixel * 3 + 2] = icolor.b;
+			}
 }
 
 __global__
