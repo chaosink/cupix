@@ -68,7 +68,7 @@ class CUPix {
 	unsigned char *frame_;
 
 	int frame_w_, frame_h_;
-	AA aa_ = NOAA;
+	AA aa_;
 	bool cull_ = true;
 	Face cull_face_ = BACK;
 	Winding front_face_ = CCW;

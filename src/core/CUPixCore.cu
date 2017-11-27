@@ -78,7 +78,7 @@ void AssemTriangle(Vertex *v, Triangle *triangle) {
 	triangle[x].v[0] = iv_min;
 	triangle[x].v[1] = iv_max;
 	triangle[x].winding = Winding((p1.x - p0.x) * (p2.y - p1.y) - (p1.y - p0.y) * (p2.x - p1.x) < 0);
-	triangle[x].empty = (iv_min.x == iv_max.x || iv_min.y == iv_max.y
+	triangle[x].empty = (iv_min.x > iv_max.x || iv_min.y > iv_max.y
 		|| v[0].position.z > 1 && v[1].position.z > 1 && v[2].position.z > 1
 		|| v[0].position.z <-1 && v[1].position.z <-1 && v[2].position.z <-1);
 }

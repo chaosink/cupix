@@ -132,8 +132,13 @@ void CUPix::Draw() {
 			if(!cull_ || (cull_face_ != FRONT_AND_BACK
 			&& (triangle_[i].winding == front_face_ != cull_face_))) {
 				glm::ivec2 dim = triangle_[i].v[1] - triangle_[i].v[0] + 1;
-				core::Rasterize<<<dim3((dim.x-1)/4+1, (dim.y-1)/8+1), dim3(4, 8)>>>
-					(triangle_[i].v[0], dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, frame_buf_);
+				if(aa_ == MSAA)
+					core::RasterizeMSAA<<<dim3((dim.x-1)/4+1, (dim.y-1)/8+1), dim3(4, 8)>>>
+						(triangle_[i].v[0], dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, frame_buf_);
+				else
+					core::Rasterize<<<dim3((dim.x-1)/8+1, (dim.y-1)/16+1), dim3(8, 16)>>>
+						(triangle_[i].v[0], dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, frame_buf_);
+
 		}
 }
 
