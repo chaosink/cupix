@@ -59,6 +59,11 @@ target_link_libraries(cupix
 	${CUDA_LIBRARIES}
 	${OPENGL_gl_LIBRARY}
 )
+if(APPLE)
+	# We need to add the default path to the driver (libcuda.dylib) as an rpath,
+	# so that the static cuda runtime can find it at runtime.
+	set_property(TARGET cupix PROPERTY BUILD_RPATH ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
+endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/utility/raw2mp4.sh ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/font/bitmap_font.data ${CMAKE_CURRENT_BINARY_DIR}/font/bitmap_font.data COPYONLY)
