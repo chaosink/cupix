@@ -80,8 +80,8 @@ void AssemTriangle(Vertex *v, Triangle *triangle) {
 	iv_min = glm::clamp(iv_min, c0, c1);
 	iv_max = glm::clamp(iv_max, c0, c1);
 
-	triangle[x].v[0] = iv_min;
-	triangle[x].v[1] = iv_max;
+	triangle[x].aabb[0] = iv_min;
+	triangle[x].aabb[1] = iv_max;
 }
 
 __device__

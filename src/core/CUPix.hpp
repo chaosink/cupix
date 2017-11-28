@@ -41,7 +41,7 @@ struct Vertex {
 	glm::vec4 position;
 };
 struct Triangle {
-	glm::ivec2 v[2];
+	glm::ivec2 aabb[2];
 	Winding winding;
 	bool empty;
 };
@@ -86,8 +86,8 @@ class CUPix {
 public:
 	CUPix(int window_w, int window_h, unsigned int buffer, AA aa, bool record);
 	~CUPix();
-	void MapResources();
-	void UnmapResources();
+	void BeforeDraw();
+	void AfterDraw();
 	void Enable(Flag flag);
 	void Disable(Flag flag);
 	void CullFace(Face face);

@@ -64,3 +64,8 @@ target_link_libraries(cupix
 )
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/utility/raw2mp4.sh ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/font/bitmap_font.data ${CMAKE_CURRENT_BINARY_DIR}/font/bitmap_font.data COPYONLY)
+file(GLOB textures RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/texture/*)
+foreach(tex ${textures})
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${tex} ${CMAKE_CURRENT_BINARY_DIR}/${tex} COPYONLY)
+endforeach()

@@ -13,4 +13,4 @@ ffmpeg \
 	-strict -2 \
 	-i $1 \
 	-vf "vflip" \
-	${1%raw}mp4
+	${1%.*}.mp4

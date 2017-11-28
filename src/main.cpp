@@ -1,17 +1,13 @@
-#include <iostream>
-using namespace std;
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "CUPix.hpp"
 #include "Model.hpp"
 #include "Texture.hpp"
 #include "Camera.hpp"
 #include "FPS.hpp"
-#include "Video.hpp"
 #include "Toggle.hpp"
-
+#include "Video.hpp"
+#include "CUPix.hpp"
 using namespace cupix;
 
 GLFWwindow* InitGLFW(int window_w, int window_H) {
@@ -96,18 +92,18 @@ int main(int argc, char *argv[]) {
 	Model model(argv[1]);
 	pix.VertexData(model.n_vertex(), model.vertex(), model.normal(), model.uv());
 
-	Texture texture("../texture/texture.jpg");
+	Texture texture("texture/texture.jpg");
 	pix.Texture(texture.data(), texture.w(), texture.h(), false); // gamma_correction = false
 
 	double time = glfwGetTime();
-	Camera camera(window, window_w, window_h);
+	Camera camera(window, window_w, window_h, time);
 	FPS fps(time);
-	Toggle toggle(window, GLFW_KEY_T, true);
+	Toggle toggle(window, GLFW_KEY_T, true); // init state = true
 	Video video(window_w, window_h);
 	while(glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window)) {
 		time = glfwGetTime();
 
-		pix.MapResources();
+		pix.BeforeDraw();
 		pix.Clear();
 
 		glm::mat4 m;
@@ -127,7 +123,7 @@ int main(int argc, char *argv[]) {
 
 		pix.Draw();
 		pix.DrawFPS(fps.Update(time) + 0.5f);
-		pix.UnmapResources();
+		pix.AfterDraw();
 
 		UpdateGL(window, window_w, window_h);
 		if(record) video.Add(pix.frame());

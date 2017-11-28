@@ -51,7 +51,7 @@ CUPix::CUPix(int window_w, int window_h, GLuint pbo, AA aa = NOAA, bool record =
 	cudaGraphicsGLRegisterBuffer(&pbo_resource_, pbo, cudaGraphicsMapFlagsNone);
 
 	// load bitmap font into GPU memory
-	FILE *font_file = fopen("../font/bitmap_font.data", "rb");
+	FILE *font_file = fopen("font/bitmap_font.data", "rb");
 	char bitmap[core::bitmap_size];
 	size_t r = fread(bitmap, 1, core::bitmap_size, font_file);
 	fclose(font_file);
@@ -66,13 +66,13 @@ CUPix::~CUPix() {
 	cudaGraphicsUnregisterResource(pbo_resource_);
 }
 
-void CUPix::MapResources() {
+void CUPix::BeforeDraw() {
 	size_t size;
 	cudaGraphicsMapResources(1, &pbo_resource_, NULL);
 	cudaGraphicsResourceGetMappedPointer((void**)&pbo_buf_, &size, pbo_resource_);
 }
 
-void CUPix::UnmapResources() {
+void CUPix::AfterDraw() {
 	if(aa_ != NOAA) core::DownSample<<<dim3((window_w_-1)/32+1, (window_h_-1)/32+1), dim3(32, 32)>>>(frame_buf_, pbo_buf_);
 	else cudaMemcpy(pbo_buf_, frame_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToDevice);
 	if(record_) cudaMemcpy(frame_, pbo_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
@@ -132,14 +132,14 @@ void CUPix::Draw() {
 			if(!cull_ || (cull_face_ != FRONT_AND_BACK
 			&& (triangle_[i].winding == front_face_ != cull_face_))) {
 				if(aa_ == MSAA) {
-					glm::ivec2 v0 = triangle_[i].v[0] / 2, v1 = triangle_[i].v[1] / 2;
+					glm::ivec2 v0 = triangle_[i].aabb[0] / 2, v1 = triangle_[i].aabb[1] / 2;
 					glm::ivec2 dim = v1 - v0 + 1;
 					core::RasterizeMSAA<<<dim3((dim.x-1)/8+1, (dim.y-1)/16+1), dim3(8, 16)>>>
 						(v0, dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, frame_buf_);
 				} else {
-					glm::ivec2 dim = triangle_[i].v[1] - triangle_[i].v[0] + 1;
+					glm::ivec2 dim = triangle_[i].aabb[1] - triangle_[i].aabb[0] + 1;
 					core::Rasterize<<<dim3((dim.x-1)/8+1, (dim.y-1)/16+1), dim3(8, 16)>>>
-						(triangle_[i].v[0], dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, frame_buf_);
+						(triangle_[i].aabb[0], dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, frame_buf_);
 				}
 
 		}

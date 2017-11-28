@@ -27,8 +27,8 @@ void PrintVec(glm::vec3 &v, const char *indent, const char *name) {
 	printf("glm::vec3(%f, %f, %f);\n", v.x, v.y, v.z);
 }
 
-Camera::Camera(GLFWwindow *window, int window_w, int window_h)
-	: window_(window), window_w_(window_w), window_h_(window_h) {
+Camera::Camera(GLFWwindow *window, int window_w, int window_h, double time)
+	: window_(window), window_w_(window_w), window_h_(window_h), time_(time) {
 	glfwSetScrollCallback(window, ScrollCallback);
 	glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwGetCursorPos(window_, &x_, &y_);

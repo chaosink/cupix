@@ -37,7 +37,7 @@ class Camera {
 	Toggle print_vp_ = Toggle(window_, GLFW_KEY_P, false);
 	bool print_pressed = false;
 public:
-	Camera(GLFWwindow *window, int window_w, int window_h);
+	Camera(GLFWwindow *window, int window_w, int window_h, double time);
 	glm::mat4 v() {
 		return v_;
 	}
