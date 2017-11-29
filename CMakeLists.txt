@@ -4,10 +4,10 @@ project(cupix LANGUAGES CXX CUDA)
 find_package(CUDA 9.0 REQUIRED)
 find_package(OpenGL REQUIRED)
 
-# C++ list
+# C++ flags
 list(APPEND CMAKE_CXX_FLAGS " -Wall -O3 ")
 
-# CUDA list
+# CUDA flags
 string(APPEND CMAKE_CUDA_FLAGS " -gencode=arch=compute_30,code=sm_30 ")
 # string(APPEND CMAKE_CUDA_FLAGS " -gencode=arch=compute_32,code=sm_32 ")
 # string(APPEND CMAKE_CUDA_FLAGS " -gencode=arch=compute_35,code=sm_35 ")
