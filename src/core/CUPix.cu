@@ -1,5 +1,9 @@
 #include "CUPix.hpp"
 
+#if _WIN32
+#include <windows.h>
+#endif
+
 #include <cstdio>
 #include <cuda_gl_interop.h>
 
@@ -158,7 +162,7 @@ void CUPix::DrawFPS(int fps) {
 void CUPix::VertexData(int size, float *position, float *normal, float *uv) {
 	n_vertex_ = size;
 	n_triangle_ = n_vertex_ / 3;
-	VertexIn v[n_vertex_];
+	VertexIn *v = new VertexIn[n_vertex_];
 	for(int i = 0; i < n_vertex_; i++) {
 		v[i].position = glm::vec3(position[i * 3], position[i * 3 + 1], position[i * 3 + 2]);
 		v[i].normal = glm::vec3(normal[i * 3], normal[i * 3 + 1], normal[i * 3 + 2]);
@@ -166,8 +170,9 @@ void CUPix::VertexData(int size, float *position, float *normal, float *uv) {
 		v[i].uv = glm::vec2(uv[i * 2], uv[i * 2 + 1]);
 	}
 	cudaFree(vertex_in_);
-	cudaMalloc(&vertex_in_, sizeof(v));
-	cudaMemcpy(vertex_in_, v, sizeof(v), cudaMemcpyHostToDevice);
+	cudaMalloc(&vertex_in_, sizeof(VertexIn) * n_vertex_);
+	cudaMemcpy(vertex_in_, v, sizeof(VertexIn) * n_vertex_, cudaMemcpyHostToDevice);
+	delete[] v;
 	cudaFree(vertex_out_);
 	cudaMalloc(&vertex_out_, sizeof(VertexOut) * n_vertex_);
 	cudaFree(vertex_buf_);
@@ -192,7 +197,7 @@ void CUPix::Time(float time) {
 }
 
 void CUPix::Texture(unsigned char *d, int w, int h, bool gamma_correction) {
-	unsigned char data[w * h * 4];
+	unsigned char *data = new unsigned char[w * h * 4];
 	for(int i = 0; i < w * h; i++) {
 		data[i * 4 + 0] = d[i * 3 + 0];
 		data[i * 4 + 1] = d[i * 3 + 1];
@@ -207,6 +212,7 @@ void CUPix::Texture(unsigned char *d, int w, int h, bool gamma_correction) {
 		data, w * 4,
 		w * 4, h,
 		cudaMemcpyHostToDevice);
+	delete[] data;
 
 	core::texture.normalized = true;
 	core::texture.sRGB = gamma_correction;
