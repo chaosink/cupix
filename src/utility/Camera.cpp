@@ -35,7 +35,7 @@ Camera::Camera(GLFWwindow *window, int window_w, int window_h, double time)
 }
 
 glm::mat4 Camera::Update(double time) {
-	fix_.Update([this]{
+	fix_.Update([this]{ // call this lambda when toggle `fix_` turn on
 		vp_ = glm::mat4(
 			1.187824, -0.546560, -0.429420, -0.428562,
 			0.000000, 2.134668, -0.468028, -0.467093,
@@ -48,7 +48,7 @@ glm::mat4 Camera::Update(double time) {
 			-0.484684, -0.408561, 0.773407, 0.000000,
 			0.021604, 0.039116, -3.244203, 1.000000
 		);
-	}, [this]{
+	}, [this]{ // call this lambda when toggle `fix_` turn off
 		glfwGetCursorPos(window_, &x_, &y_);
 	});
 	if(fix_.state()) return vp_;
@@ -58,10 +58,27 @@ glm::mat4 Camera::Update(double time) {
 
 	double x, y;
 	glfwGetCursorPos(window_, &x, &y);
-	angle_horizontal_ += mouse_speed_ * float(x_ - x);
-	angle_vertical_   += mouse_speed_ * float(y_ - y);
+	angle_horizontal_ += mouse_turn_factor_ * float(x_ - x);
+	angle_vertical_   += mouse_turn_factor_ * float(y_ - y);
 	x_ = x;
 	y_ = y;
+
+	// turn right
+	if(glfwGetKey(window_, GLFW_KEY_L) == GLFW_PRESS) {
+		angle_horizontal_ += delta_time * turn_speed_;
+	}
+	// turn left
+	if(glfwGetKey(window_, GLFW_KEY_J) == GLFW_PRESS) {
+		angle_horizontal_ -= delta_time * turn_speed_;
+	}
+	// turn  up
+	if(glfwGetKey(window_, GLFW_KEY_I) == GLFW_PRESS) {
+		angle_vertical_ += delta_time * turn_speed_;
+	}
+	// turn down
+	if(glfwGetKey(window_, GLFW_KEY_K) == GLFW_PRESS) {
+		angle_vertical_ -= delta_time * turn_speed_;
+	}
 
 	// Direction: Spherical coordinates to Cartesian coordinates conversion
 	glm::vec3 direction(
@@ -69,52 +86,54 @@ glm::mat4 Camera::Update(double time) {
 		sin(angle_vertical_),
 		cos(angle_vertical_) * cos(angle_horizontal_)
 	);
-
 	// Right vector
-	glm::vec3 right = glm::vec3(
+	glm::vec3 right(
 		sin(angle_horizontal_ - PI / 2.0f),
 		0.f,
 		cos(angle_horizontal_ - PI / 2.0f)
 	);
-
 	// Up vector
 	glm::vec3 up = glm::cross(right, direction);
 
-	// forward
-	if(glfwGetKey(window_, GLFW_KEY_W) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_UP) == GLFW_PRESS) {
-		position_ += delta_time * speed_ * direction;
-	}
-	// backward
-	if(glfwGetKey(window_, GLFW_KEY_S) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_DOWN) == GLFW_PRESS) {
-		position_ -= delta_time * speed_ * direction;
-	}
-	// right
-	if(glfwGetKey(window_, GLFW_KEY_D) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-		position_ += delta_time * speed_ * right;
-	}
-	// left
-	if(glfwGetKey(window_, GLFW_KEY_A) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_LEFT) == GLFW_PRESS) {
-		position_ -= delta_time * speed_ * right;
-	}
-	if(glfwGetKey(window_, GLFW_KEY_EQUAL) == GLFW_PRESS) {
-		speed_ += 1;
-	}
-	if(glfwGetKey(window_, GLFW_KEY_MINUS) == GLFW_PRESS) {
-		speed_ -= 1;
-	}
+	// move forward
+	if(glfwGetKey(window_, GLFW_KEY_W) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_UP) == GLFW_PRESS)
+		position_ += delta_time * move_speed_ * direction;
+	// move backward
+	if(glfwGetKey(window_, GLFW_KEY_S) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_DOWN) == GLFW_PRESS)
+		position_ -= delta_time * move_speed_ * direction;
+	// move right
+	if(glfwGetKey(window_, GLFW_KEY_D) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_RIGHT) == GLFW_PRESS)
+		position_ += delta_time * move_speed_ * right;
+	// move left
+	if(glfwGetKey(window_, GLFW_KEY_A) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_LEFT) == GLFW_PRESS)
+		position_ -= delta_time * move_speed_ * right;
+	// move up
+	if(glfwGetKey(window_, GLFW_KEY_E) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
+		position_ += delta_time * move_speed_ * up;
+	// move down
+	if(glfwGetKey(window_, GLFW_KEY_Q) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
+		position_ -= delta_time * move_speed_ * up;
+	if(glfwGetKey(window_, GLFW_KEY_EQUAL) == GLFW_PRESS)
+		move_speed_ *= 1.1f;
+	if(glfwGetKey(window_, GLFW_KEY_MINUS) == GLFW_PRESS)
+		move_speed_ *= 0.9f;
+	if(glfwGetKey(window_, GLFW_KEY_RIGHT_BRACKET ) == GLFW_PRESS)
+		turn_speed_ *= 1.1f;
+	if(glfwGetKey(window_, GLFW_KEY_LEFT_BRACKET ) == GLFW_PRESS)
+		turn_speed_ *= 0.9f;
 	if(glfwGetKey(window_, GLFW_KEY_SPACE) == GLFW_PRESS) {
 		position_ = position_init_;
 		angle_horizontal_ = angle_horizontal_init_;
 		angle_vertical_ = angle_vertical_init_;
 		fov_ = fov_init_;
 	}
-	print_vp_.Update([this]{
+	print_vp_.Update([this]{ // call this lambda when toggle `print_vp_` turn on
 		PrintMat(vp_, "\t\t", "vp_");
 		PrintMat(v_, "\t\t", "v_");
 	});
-
 	fov_ += delta_time * scroll_speed_ * scoll;
 	scoll = 0;
+
 	// Camera matrix
 	v_ = glm::lookAt(
 			position_,             // Camera is here

@@ -26,8 +26,9 @@ class Camera {
 	float angle_vertical_ = angle_vertical_init_;
 	float fov_ = fov_init_;
 
-	float speed_ = 2.0f;
-	float mouse_speed_ = 0.002f;
+	float move_speed_ = 2.0f;
+	float turn_speed_ = 0.5f;
+	float mouse_turn_factor_ = 0.002f;
 	float scroll_speed_ = 2.f;
 
 	double time_;;
