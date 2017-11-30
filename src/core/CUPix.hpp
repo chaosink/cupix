@@ -5,7 +5,7 @@
 
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 1
-#define VERSION_PATCH 0
+#define VERSION_PATCH 1
 
 #define _QUOTE(S) #S
 #define _STR(S) _QUOTE(S)
