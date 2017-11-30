@@ -65,11 +65,11 @@ glm::mat4 Camera::Update(double time) {
 
 	// turn right
 	if(glfwGetKey(window_, GLFW_KEY_L) == GLFW_PRESS) {
-		angle_horizontal_ += delta_time * turn_speed_;
+		angle_horizontal_ -= delta_time * turn_speed_;
 	}
 	// turn left
 	if(glfwGetKey(window_, GLFW_KEY_J) == GLFW_PRESS) {
-		angle_horizontal_ -= delta_time * turn_speed_;
+		angle_horizontal_ += delta_time * turn_speed_;
 	}
 	// turn  up
 	if(glfwGetKey(window_, GLFW_KEY_I) == GLFW_PRESS) {
