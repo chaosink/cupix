@@ -53,4 +53,4 @@ SSAA
 
 ![DeformFlower](result/image/shadertoy/DeformFlower.png)
 
-More imgae results and some video results can be found in the `result` directory.
+More image results and some video results can be found in the `result` directory.
