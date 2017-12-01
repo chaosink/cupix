@@ -41,6 +41,7 @@ add_library(core
 target_compile_features(core PUBLIC cxx_std_11)
 set_target_properties(core PROPERTIES
 	CUDA_SEPARABLE_COMPILATION ON
+	CUDA_RESOLVE_DEVICE_SYMBOLS ON
 )
 
 add_executable(cupix
