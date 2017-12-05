@@ -4,7 +4,13 @@ project(cupix LANGUAGES CXX CUDA)
 find_package(CUDA 9.0 REQUIRED)
 
 # C++ flags
-list(APPEND CMAKE_CXX_FLAGS " -Wall -O3 ")
+if(MSVC)
+	add_definitions(-DCONSTEXPR=const -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS)
+else()
+	add_definitions(-DCONSTEXPR=constexpr)
+	set(CXX_WARNINGS "-Wall -Wextra -Wpointer-arith -Wcast-align -fstrict-aliasing -Wno-unused-local-typedefs -Wno-misleading-indentation -Wno-maybe-uninitialized -Wno-int-in-bool-context -Wno-implicit-fallthrough")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_WARNINGS} -fvisibility-inlines-hidden -O3")
+endif()
 
 # CUDA flags
 string(APPEND CMAKE_CUDA_FLAGS " -gencode=arch=compute_30,code=sm_30 ")
