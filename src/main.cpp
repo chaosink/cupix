@@ -1,16 +1,16 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "CUPix.hpp"
+using namespace cupix;
 #include "Model.hpp"
 #include "Texture.hpp"
 #include "Camera.hpp"
 #include "FPS.hpp"
 #include "Toggle.hpp"
 #include "Video.hpp"
-#include "CUPix.hpp"
-using namespace cupix;
 
-GLFWwindow* InitGLFW(int window_w, int window_H) {
+GLFWwindow* InitGLFW(int window_w, int window_h) {
 	if(!glfwInit()) exit(EXIT_FAILURE);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
@@ -18,7 +18,7 @@ GLFWwindow* InitGLFW(int window_w, int window_H) {
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
-	GLFWwindow *window = glfwCreateWindow(window_w, window_H, "CUPix", NULL, NULL);
+	GLFWwindow *window = glfwCreateWindow(window_w, window_h, "CUPix", NULL, NULL);
 	if(!window) {
 		glfwTerminate();
 		exit(EXIT_FAILURE);

@@ -17,8 +17,8 @@ void VertexShader(VertexIn &in, VertexOut &out, Vertex &v) {
 	// m = *((mat4*)mv);
 	// out.position = m * vec4(in.position, 1.f);
 	// out.normal   = m * vec4(in.normal, 0.f);
-	out.position = vec4(in.position, 1.f);
-	out.normal   = vec4(in.normal, 0.f);
+	out.position = in.position;
+	out.normal   = in.normal;
 	out.color    = in.color;
 	out.uv       = in.uv;
 }

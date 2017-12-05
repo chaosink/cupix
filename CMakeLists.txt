@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 project(cupix LANGUAGES CXX CUDA)
 
 find_package(CUDA 9.0 REQUIRED)
-find_package(OpenGL REQUIRED)
 
 # C++ flags
 list(APPEND CMAKE_CXX_FLAGS " -Wall -O3 ")
@@ -58,7 +57,6 @@ target_link_libraries(cupix
 	glew_s
 	glfw
 	${CUDA_LIBRARIES}
-	${OPENGL_gl_LIBRARY}
 )
 if(APPLE)
 	# We need to add the default path to the driver (libcuda.dylib) as an rpath,
@@ -66,7 +64,7 @@ if(APPLE)
 	set_property(TARGET cupix PROPERTY BUILD_RPATH ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/utility/raw2mp4.sh ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/utility/raw2mp4.sh ${CMAKE_CURRENT_BINARY_DIR}/raw2mp4.sh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/font/bitmap_font.data ${CMAKE_CURRENT_BINARY_DIR}/font/bitmap_font.data COPYONLY)
 file(GLOB textures RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/texture/*)
 foreach(tex ${textures})
