@@ -4,7 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 static double scoll = 0;
-static void ScrollCallback(GLFWwindow* window, double x, double y) {
+static void ScrollCallback(GLFWwindow* /*window*/, double /*x*/, double y) {
 	scoll = y;
 }
 
