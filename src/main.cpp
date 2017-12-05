@@ -29,7 +29,7 @@ GLFWwindow* InitGLFW(int window_w, int window_h) {
 		fprintf(stderr, "Failed to initialize GLEW\n");
 		exit(EXIT_FAILURE);
 	}
-	glfwSwapInterval(1);
+	// glfwSwapInterval(1);
 	return window;
 }
 
