@@ -33,7 +33,6 @@ include_directories(
 	src/thirdparty/glfw-3.2.1/include
 	src/thirdparty/glm-0.9.8.5
 	${CUDA_INCLUDE_DIRS}
-	${OPENGL_INCLUDE_DIR}
 )
 
 add_library(core
