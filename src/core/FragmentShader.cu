@@ -2,7 +2,7 @@
 
 namespace cupix {
 
-namespace core {
+namespace kernel {
 
 extern texture<uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat> texture;
 extern __constant__ __device__ int w, h;

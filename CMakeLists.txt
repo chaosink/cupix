@@ -37,7 +37,7 @@ include_directories(
 
 add_library(core
 	src/core/CUPix.cu
-	src/core/CUPixCore.cu
+	src/core/CUPixKernel.cu
 	src/core/VertexShader.cu
 	src/core/FragmentShader.cu
 	src/core/Shadertoy.cu

@@ -9,7 +9,7 @@
 
 namespace cupix {
 
-namespace core {
+namespace kernel {
 
 texture<uchar4, cudaTextureType2D, cudaReadModeNormalizedFloat> texture;
 __constant__ __device__ int w, h;
@@ -50,16 +50,16 @@ CUPix::CUPix(int window_w, int window_h, GLuint pbo, AA aa = NOAA, bool record =
 	frame_ = new unsigned char[window_w_ * window_h_ * 3];
 	cudaMalloc(&depth_buf_, sizeof(float) * frame_w_ * frame_h_);
 	cudaMalloc(&frame_buf_, frame_w_ * frame_h_ * 3);
-	cudaMemcpyToSymbol(core::w, &frame_w_, sizeof(int));
-	cudaMemcpyToSymbol(core::h, &frame_h_, sizeof(int));
+	cudaMemcpyToSymbol(kernel::w, &frame_w_, sizeof(int));
+	cudaMemcpyToSymbol(kernel::h, &frame_h_, sizeof(int));
 	cudaGraphicsGLRegisterBuffer(&pbo_resource_, pbo, cudaGraphicsMapFlagsNone);
 
 	// load bitmap font into GPU memory
 	FILE *font_file = fopen("font/bitmap_font.data", "rb");
-	char bitmap[core::bitmap_size];
-	size_t r = fread(bitmap, 1, core::bitmap_size, font_file);
+	char bitmap[kernel::bitmap_size];
+	size_t r = fread(bitmap, 1, kernel::bitmap_size, font_file);
 	fclose(font_file);
-	cudaMemcpyToSymbol(core::bitmap, bitmap, core::bitmap_size);
+	cudaMemcpyToSymbol(kernel::bitmap, bitmap, kernel::bitmap_size);
 }
 
 CUPix::~CUPix() {
@@ -77,7 +77,7 @@ void CUPix::BeforeDraw() {
 }
 
 void CUPix::AfterDraw() {
-	if(aa_ != NOAA) core::DownSample<<<dim3((window_w_-1)/32+1, (window_h_-1)/32+1), dim3(32, 32)>>>(frame_buf_, pbo_buf_);
+	if(aa_ != NOAA) kernel::DownSample<<<dim3((window_w_-1)/32+1, (window_h_-1)/32+1), dim3(32, 32)>>>(frame_buf_, pbo_buf_);
 	else cudaMemcpy(pbo_buf_, frame_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToDevice);
 	if(record_) cudaMemcpy(frame_, pbo_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
 	cudaGraphicsUnmapResources(1, &pbo_resource_, NULL);
@@ -87,9 +87,9 @@ void CUPix::Enable(Flag flag) {
 	bool b = true;
 	switch(flag) {
 		case DEPTH_TEST:
-			cudaMemcpyToSymbol(core::depth_test, &b, 1); return;
+			cudaMemcpyToSymbol(kernel::depth_test, &b, 1); return;
 		case BLEND:
-			cudaMemcpyToSymbol(core::blend, &b, 1); return;
+			cudaMemcpyToSymbol(kernel::blend, &b, 1); return;
 		case CULL_FACE:
 			cull_ = b; return;
 	}
@@ -99,9 +99,9 @@ void CUPix::Disable(Flag flag) {
 	bool b = false;
 	switch(flag) {
 		case DEPTH_TEST:
-			cudaMemcpyToSymbol(core::depth_test, &b, 1); return;
+			cudaMemcpyToSymbol(kernel::depth_test, &b, 1); return;
 		case BLEND:
-			cudaMemcpyToSymbol(core::blend, &b, 1); return;
+			cudaMemcpyToSymbol(kernel::blend, &b, 1); return;
 		case CULL_FACE:
 			cull_ = b; return;
 	}
@@ -119,17 +119,17 @@ void CUPix::ClearColor(float r, float g, float b, float a) {
 	glm::ivec4 color = glm::vec4(r * 255.f, g * 255.f, b * 255.f, a * 255.f);
 	color = glm::clamp(color, glm::ivec4(0), glm::ivec4(255));
 	glm::u8vec4 clear_color = color;
-	cudaMemcpyToSymbol(core::clear_color, &clear_color, 4);
+	cudaMemcpyToSymbol(kernel::clear_color, &clear_color, 4);
 }
 
 void CUPix::Clear() {
-	core::Clear<<<dim3((frame_w_-1)/32+1, (frame_h_-1)/32+1), dim3(32, 32)>>>(frame_buf_, depth_buf_);
+	kernel::Clear<<<dim3((frame_w_-1)/32+1, (frame_h_-1)/32+1), dim3(32, 32)>>>(frame_buf_, depth_buf_);
 }
 
 void CUPix::Draw() {
-	core::NormalSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_in_, vertex_out_, vertex_buf_);
-	core::WindowSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_buf_);
-	core::AssemTriangle<<<(n_triangle_-1)/32+1, 32>>>(vertex_buf_, triangle_buf_);
+	kernel::NormalSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_in_, vertex_out_, vertex_buf_);
+	kernel::WindowSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_buf_);
+	kernel::AssemTriangle<<<(n_triangle_-1)/32+1, 32>>>(vertex_buf_, triangle_buf_);
 	cudaMemcpy(triangle_, triangle_buf_, sizeof(Triangle) * n_triangle_, cudaMemcpyDeviceToHost);
 	for(int i = 0; i < n_triangle_; i++)
 		if(!triangle_[i].empty)
@@ -138,11 +138,11 @@ void CUPix::Draw() {
 				if(aa_ == MSAA) {
 					glm::ivec2 v0 = triangle_[i].aabb[0] / 2, v1 = triangle_[i].aabb[1] / 2;
 					glm::ivec2 dim = v1 - v0 + 1;
-					core::RasterizeMSAA<<<dim3((dim.x-1)/8+1, (dim.y-1)/16+1), dim3(8, 16)>>>
+					kernel::RasterizeMSAA<<<dim3((dim.x-1)/8+1, (dim.y-1)/16+1), dim3(8, 16)>>>
 						(v0, dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, frame_buf_);
 				} else {
 					glm::ivec2 dim = triangle_[i].aabb[1] - triangle_[i].aabb[0] + 1;
-					core::Rasterize<<<dim3((dim.x-1)/8+1, (dim.y-1)/16+1), dim3(8, 16)>>>
+					kernel::Rasterize<<<dim3((dim.x-1)/8+1, (dim.y-1)/16+1), dim3(8, 16)>>>
 						(triangle_[i].aabb[0], dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, frame_buf_);
 				}
 
@@ -151,12 +151,12 @@ void CUPix::Draw() {
 
 void CUPix::DrawFPS(int fps) {
 	bool aa = aa_ != NOAA;
-	core::DrawCharater<<<1, dim3(16, 16)>>>('F',  0, 0, aa, frame_buf_);
-	core::DrawCharater<<<1, dim3(16, 16)>>>('P', 16, 0, aa, frame_buf_);
-	core::DrawCharater<<<1, dim3(16, 16)>>>('S', 32 - 3, 0, aa, frame_buf_);
-	core::DrawCharater<<<1, dim3(16, 16)>>>(fps % 1000 / 100 + 48, 48 + 5, 0, aa, frame_buf_);
-	core::DrawCharater<<<1, dim3(16, 16)>>>(fps % 100 / 10   + 48, 64 + 5, 0, aa, frame_buf_);
-	core::DrawCharater<<<1, dim3(16, 16)>>>(fps % 10         + 48, 80 + 5, 0, aa, frame_buf_);
+	kernel::DrawCharater<<<1, dim3(16, 16)>>>('F',  0, 0, aa, frame_buf_);
+	kernel::DrawCharater<<<1, dim3(16, 16)>>>('P', 16, 0, aa, frame_buf_);
+	kernel::DrawCharater<<<1, dim3(16, 16)>>>('S', 32 - 3, 0, aa, frame_buf_);
+	kernel::DrawCharater<<<1, dim3(16, 16)>>>(fps % 1000 / 100 + 48, 48 + 5, 0, aa, frame_buf_);
+	kernel::DrawCharater<<<1, dim3(16, 16)>>>(fps % 100 / 10   + 48, 64 + 5, 0, aa, frame_buf_);
+	kernel::DrawCharater<<<1, dim3(16, 16)>>>(fps % 10         + 48, 80 + 5, 0, aa, frame_buf_);
 }
 
 void CUPix::VertexData(int size, float *position, float *normal, float *uv) {
@@ -181,19 +181,19 @@ void CUPix::VertexData(int size, float *position, float *normal, float *uv) {
 	cudaMalloc(&triangle_buf_, sizeof(Triangle) * n_triangle_);
 	delete[] triangle_;
 	triangle_ = new Triangle[n_triangle_];
-	cudaMemcpyToSymbol(core::n_triangle, &n_triangle_, sizeof(int));
+	cudaMemcpyToSymbol(kernel::n_triangle, &n_triangle_, sizeof(int));
 }
 
 void CUPix::MVP(glm::mat4 &mvp) {
-	cudaMemcpyToSymbol(core::mvp, &mvp, sizeof(glm::mat4));
+	cudaMemcpyToSymbol(kernel::mvp, &mvp, sizeof(glm::mat4));
 }
 
 void CUPix::MV(glm::mat4 &mv) {
-	cudaMemcpyToSymbol(core::mv, &mv, sizeof(glm::mat4));
+	cudaMemcpyToSymbol(kernel::mv, &mv, sizeof(glm::mat4));
 }
 
 void CUPix::Time(float time) {
-	cudaMemcpyToSymbol(core::time, &time, sizeof(float));
+	cudaMemcpyToSymbol(kernel::time, &time, sizeof(float));
 }
 
 void CUPix::Texture(unsigned char *d, int w, int h, bool gamma_correction) {
@@ -214,24 +214,24 @@ void CUPix::Texture(unsigned char *d, int w, int h, bool gamma_correction) {
 		cudaMemcpyHostToDevice);
 	delete[] data;
 
-	core::texture.normalized = true;
-	core::texture.sRGB = gamma_correction;
-	core::texture.filterMode = cudaFilterModeLinear;
-	core::texture.addressMode[0] = cudaAddressModeWrap;
-	core::texture.addressMode[1] = cudaAddressModeWrap;
+	kernel::texture.normalized = true;
+	kernel::texture.sRGB = gamma_correction;
+	kernel::texture.filterMode = cudaFilterModeLinear;
+	kernel::texture.addressMode[0] = cudaAddressModeWrap;
+	kernel::texture.addressMode[1] = cudaAddressModeWrap;
 	cudaChannelFormatDesc desc =
 		cudaCreateChannelDesc(8, 8, 8, 8, cudaChannelFormatKindUnsigned);
 
-	cudaBindTexture2D(NULL, core::texture, texture_buf_, desc, w, h, pitch);
+	cudaBindTexture2D(NULL, kernel::texture, texture_buf_, desc, w, h, pitch);
 }
 
 void CUPix::Lights(int n, Light *light) {
-	cudaMemcpyToSymbol(core::n_light, &n, sizeof(int));
-	cudaMemcpyToSymbol(core::light, light, sizeof(Light) * n);
+	cudaMemcpyToSymbol(kernel::n_light, &n, sizeof(int));
+	cudaMemcpyToSymbol(kernel::light, light, sizeof(Light) * n);
 }
 
 void CUPix::Toggle(bool toggle) {
-	cudaMemcpyToSymbol(core::toggle, &toggle, sizeof(toggle));
+	cudaMemcpyToSymbol(kernel::toggle, &toggle, sizeof(toggle));
 }
 
 }
