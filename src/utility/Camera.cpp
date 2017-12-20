@@ -1,7 +1,7 @@
 #include "Camera.hpp"
 
 #include <cstdio>
-#include <glm/gtc/matrix_transform.hpp>
+#include "glm/gtc/matrix_transform.hpp"
 
 static double scoll = 0;
 static void ScrollCallback(GLFWwindow* /*window*/, double /*x*/, double y) {

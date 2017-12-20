@@ -4,6 +4,7 @@ project(cupix LANGUAGES CXX CUDA)
 find_package(CUDA 9.0 REQUIRED)
 
 # C++ flags
+set(CMAKE_CXX_STANDARD 11)
 if(MSVC)
 	add_definitions(-DCONSTEXPR=const -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS)
 else()
@@ -13,6 +14,7 @@ else()
 endif()
 
 # CUDA flags
+set(CMAKE_CUDA_STANDARD 11)
 string(APPEND CMAKE_CUDA_FLAGS " -gencode=arch=compute_30,code=compute_30 ")
 string(APPEND CMAKE_CUDA_FLAGS " -gencode=arch=compute_30,code=sm_30 ")
 # string(APPEND CMAKE_CUDA_FLAGS " -gencode=arch=compute_32,code=sm_32 ")
@@ -42,7 +44,6 @@ add_library(core
 	src/core/FragmentShader.cu
 	src/core/Shadertoy.cu
 )
-target_compile_features(core PUBLIC cxx_std_11)
 set_target_properties(core PROPERTIES
 	CUDA_SEPARABLE_COMPILATION ON
 	CUDA_RESOLVE_DEVICE_SYMBOLS ON

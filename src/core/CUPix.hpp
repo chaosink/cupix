@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cuda_runtime.h>
-#include <glm/glm.hpp>
+#include "glm/glm.hpp"
 
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 1
