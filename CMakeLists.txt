@@ -49,7 +49,7 @@ set_target_properties(core PROPERTIES
 )
 
 add_executable(cupix
-	src/main.cpp
+	src/cupix/cupix.cpp
 	src/utility/Camera.cpp
 	src/utility/Model.cpp
 	src/utility/FPS.cpp
