@@ -44,7 +44,8 @@ void WindowSpace(Vertex *v) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	if(x >= n_triangle * 3) return;
 
-	float w_inv = 1.f / v[x].position.w;
+	// float w_inv = 1.f / abs(v[x].position.w); // Is abs() OK?
+	float w_inv = 1.f / v[x].position.w; // Is abs() OK?
 	glm::mat4 m;
 	glm::vec3 p = v[x].position * w_inv;
 	p.x = (p.x * 0.5f + 0.5f) * w;
