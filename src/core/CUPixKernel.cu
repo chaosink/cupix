@@ -39,12 +39,44 @@ void NormalSpace(VertexIn *in, VertexOut *out, Vertex *v) {
 	VertexShader(in[x], out[x], v[x]);
 }
 
+template<typename T>
+__device__
+T Lerp(T v0, T v1, float r) {
+	return v0 * r + v1 * (1.f - r);
+}
+
+__global__
+void Clip(Vertex *v, VertexOut *out) {
+	int x = threadIdx.x + blockIdx.x * blockDim.x;
+	if(x >= n_triangle) return;
+
+	int n = 0;
+	int num[3];
+	const float epsilon = 2e-10;
+	for(int i = 0; i < 3; ++i)
+		if(v[x * 3 + 0].position.w <= epsilon) {
+			++n;
+			num[n] = i;
+		} else {
+			num[0] = i;
+		}
+	if(n == 1)
+		for(int i = 1; i < 3; ++i) {
+			float r = (epsilon - v[x * 3 + num[0]].position.w) / (v[x * 3 + num[i]].position.w - v[x * 3 + num[0]].position.w);
+			v  [x * 3 + num[i]].position = Lerp(v  [x * 3 + num[0]].position, v  [x * 3 + num[i]].position, r);
+			out[x * 3 + num[i]].position = Lerp(out[x * 3 + num[0]].position, out[x * 3 + num[i]].position, r);
+			out[x * 3 + num[i]].normal   = Lerp(out[x * 3 + num[0]].normal,   out[x * 3 + num[i]].normal,   r);
+			out[x * 3 + num[i]].color    = Lerp(out[x * 3 + num[0]].color,    out[x * 3 + num[i]].color,    r);
+			out[x * 3 + num[i]].uv       = Lerp(out[x * 3 + num[0]].uv,       out[x * 3 + num[i]].uv,       r);
+		}
+}
+
 __global__
 void WindowSpace(Vertex *v) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	if(x >= n_triangle * 3) return;
 
-	float w_inv = 1.f / abs(v[x].position.w);
+	float w_inv = 1.f / v[x].position.w;
 	glm::mat4 m;
 	glm::vec3 p = v[x].position * w_inv;
 	p.x = (p.x * 0.5f + 0.5f) * w;
