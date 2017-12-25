@@ -119,9 +119,10 @@ int main(int argc, char *argv[]) {
 
 		glm::vec4 p0 = mvp * glm::vec4(-1.f,-1.f, 1.f, 1.f);
 		glm::vec4 p1 = mvp * glm::vec4(-1.f,-1.f,-1.f, 1.f);
+		glm::vec4 p2 = mvp * glm::vec4( 1.f,-1.f, 1.f, 1.f);
 
-		printf("%10.6f %10.6f %10.6f %10.6f\t%10.6f %10.6f %10.6f %10.6f\n", p0.x, p0.y, p0.z, p0.w, p1.x, p1.y, p1.z, p1.w);
-		printf("%10.6f %10.6f %10.6f\t\t%10.6f %10.6f %10.6f\n", p0.x / p0.w, p0.y / p0.w, p0.z / p0.w, p1.x / p1.w, p1.y / p1.w, p1.z / p1.w);
+		printf("%10.6f %10.6f %10.6f %10.6f\t%10.6f %10.6f %10.6f %10.6f\t%10.6f %10.6f %10.6f %10.6f\n", p0.x, p0.y, p0.z, p0.w, p1.x, p1.y, p1.z, p1.w, p2.x, p2.y, p2.z, p2.w);
+		printf("%10.6f %10.6f %10.6f\t\t%10.6f %10.6f %10.6f\t\t%10.6f %10.6f %10.6f\n", p0.x / p0.w, p0.y / p0.w, p0.z / p0.w, p1.x / p1.w, p1.y / p1.w, p1.z / p1.w, p2.x / p2.w, p2.y / p2.w, p2.z / p2.w);
 
 		pix.Time(time);
 		pix.Toggle(toggle.Update([] {
@@ -131,7 +132,7 @@ int main(int argc, char *argv[]) {
 		}));
 
 		pix.Draw();
-		// pix.DrawFPS(fps.Update(time) + 0.5f);
+		pix.DrawFPS(fps.Update(time) + 0.5f);
 		pix.AfterDraw();
 
 		UpdateGL(window, window_w, window_h);

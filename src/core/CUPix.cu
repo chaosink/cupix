@@ -20,7 +20,8 @@ __constant__ __device__ float mv[16];
 __constant__ __device__ float time;
 __constant__ __device__ bool toggle;
 
-__constant__ __device__ int n_triangle;
+__device__ int n_triangle;
+__device__ int n_triangle_clipped = 0;
 __constant__ __device__ bool depth_test = true;
 __constant__ __device__ bool blend = false;
 __constant__ __device__ unsigned char clear_color[4];
@@ -30,6 +31,7 @@ __constant__ __device__ char bitmap[bitmap_size];
 
 __global__ void Clear(unsigned char *frame_buf, float *depth_buf);
 __global__ void NormalSpace(VertexIn *in, VertexOut *out, Vertex *v);
+__global__ void Clip(Vertex *v, VertexOut *out);
 __global__ void WindowSpace(Vertex *v);
 __global__ void AssemTriangle(Vertex *v, Triangle *triangle);
 __global__ void Rasterize(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, float *depth_buf, unsigned char* frame_buf);
@@ -128,10 +130,15 @@ void CUPix::Clear() {
 
 void CUPix::Draw() {
 	kernel::NormalSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_in_, vertex_out_, vertex_buf_);
-	kernel::WindowSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_buf_);
-	kernel::AssemTriangle<<<(n_triangle_-1)/32+1, 32>>>(vertex_buf_, triangle_buf_);
-	cudaMemcpy(triangle_, triangle_buf_, sizeof(Triangle) * n_triangle_, cudaMemcpyDeviceToHost);
-	for(int i = 0; i < n_triangle_; i++)
+	kernel::Clip<<<(n_triangle_-1)/32+1, 32>>>(vertex_buf_, vertex_out_);
+	int n_triangle_clipped;
+	cudaMemcpyFromSymbol(&n_triangle_clipped, kernel::n_triangle_clipped, sizeof(int));
+	int n_triangle = n_triangle_ + n_triangle_clipped;
+	printf("%d %d\n", n_triangle, n_triangle_clipped);
+	kernel::WindowSpace<<<(n_triangle*3-1)/32+1, 32>>>(vertex_buf_);
+	kernel::AssemTriangle<<<(n_triangle-1)/32+1, 32>>>(vertex_buf_, triangle_buf_);
+	cudaMemcpy(triangle_, triangle_buf_, sizeof(Triangle) * n_triangle, cudaMemcpyDeviceToHost);
+	for(int i = 0; i < n_triangle; i++)
 		if(!triangle_[i].empty)
 			if(!cull_ || (cull_face_ != FRONT_AND_BACK
 			&& (triangle_[i].winding == front_face_ != cull_face_))) {
@@ -145,8 +152,7 @@ void CUPix::Draw() {
 					kernel::Rasterize<<<dim3((dim.x-1)/8+1, (dim.y-1)/16+1), dim3(8, 16)>>>
 						(triangle_[i].aabb[0], dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, frame_buf_);
 				}
-
-		}
+			}
 }
 
 void CUPix::DrawFPS(int fps) {
@@ -174,13 +180,13 @@ void CUPix::VertexData(int size, float *position, float *normal, float *uv) {
 	cudaMemcpy(vertex_in_, v, sizeof(VertexIn) * n_vertex_, cudaMemcpyHostToDevice);
 	delete[] v;
 	cudaFree(vertex_out_);
-	cudaMalloc(&vertex_out_, sizeof(VertexOut) * n_vertex_);
+	cudaMalloc(&vertex_out_, sizeof(VertexOut) * n_vertex_ * 2); // double memory for clipping one triangle into two triangles
 	cudaFree(vertex_buf_);
-	cudaMalloc(&vertex_buf_, sizeof(Vertex) * n_vertex_);
+	cudaMalloc(&vertex_buf_, sizeof(Vertex) * n_vertex_ * 2); // ditto
 	cudaFree(triangle_buf_);
-	cudaMalloc(&triangle_buf_, sizeof(Triangle) * n_triangle_);
+	cudaMalloc(&triangle_buf_, sizeof(Triangle) * n_triangle_ * 2); // ditto
 	delete[] triangle_;
-	triangle_ = new Triangle[n_triangle_];
+	triangle_ = new Triangle[n_triangle_ * 2];
 	cudaMemcpyToSymbol(kernel::n_triangle, &n_triangle_, sizeof(int));
 }
 

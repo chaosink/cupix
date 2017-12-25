@@ -135,12 +135,8 @@ glm::mat4 Camera::Update(double time) {
 	scoll = 0;
 
 	// Camera matrix
-	v_ = glm::lookAt(
-			position_,             // Camera is here
-			position_ + direction, // and looks here: at the same position_, plus "direction"
-			up);                   // Head is up (set to 0,-1,0 to look upside-down)
-	// Projection matrix: 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	p_ = glm::perspective(fov_, float(window_w_) / window_h_, 0.1f, 100.f);
+	v_ = glm::lookAt(position_, position_ + direction, up);
+	p_ = glm::perspective(fov_, float(window_w_) / window_h_, 0.01f, 10000.f);
 	vp_ = p_ * v_;
 
 	return vp_;

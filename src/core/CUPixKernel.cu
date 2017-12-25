@@ -1,11 +1,14 @@
 #include "CUPix.hpp"
 
+#include <cstdio>
+
 namespace cupix {
 
 namespace kernel {
 
 extern __constant__ __device__ int w, h;
-extern __constant__ __device__ int n_triangle;
+extern __device__ int n_triangle;
+extern __device__ int n_triangle_clipped;
 extern __constant__ __device__ bool depth_test;
 extern __constant__ __device__ bool blend;
 extern __constant__ __device__ unsigned char clear_color[4];
@@ -39,10 +42,75 @@ void NormalSpace(VertexIn *in, VertexOut *out, Vertex *v) {
 	VertexShader(in[x], out[x], v[x]);
 }
 
+template<typename T>
+__device__
+T Lerp(T v0, T v1, float r) {
+	return v0 * r + v1 * (1.f - r);
+}
+
+__global__
+void Clip(Vertex *v, VertexOut *out) {
+	int x = threadIdx.x + blockIdx.x * blockDim.x;
+	if(x >= n_triangle) return;
+
+	if(x == 0) n_triangle_clipped = 0;
+	__syncthreads();
+
+	int n_iv = 0, n_ov = 0;
+	int iv[3], ov[3];
+	const float epsilon = 0.01f;//1e-6;//1.f / 1024;
+	for(int i = 0; i < 3; ++i)
+		if(v[x * 3 + i].position.w < epsilon)
+			ov[n_ov++] = i;
+		else
+			iv[n_iv++] = i;
+
+	if(n_ov == 2) {
+		for(int i = 0; i < n_ov; ++i) {
+			float r = (epsilon - v[x * 3 + iv[0]].position.w) / (v[x * 3 + ov[i]].position.w - v[x * 3 + iv[0]].position.w);
+			v  [x * 3 + ov[i]].position = Lerp(v  [x * 3 + ov[i]].position, v  [x * 3 + iv[0]].position, r);
+			out[x * 3 + ov[i]].position = Lerp(out[x * 3 + ov[i]].position, out[x * 3 + iv[0]].position, r);
+			out[x * 3 + ov[i]].normal   = Lerp(out[x * 3 + ov[i]].normal,   out[x * 3 + iv[0]].normal,   r);
+			out[x * 3 + ov[i]].color    = Lerp(out[x * 3 + ov[i]].color,    out[x * 3 + iv[0]].color,    r);
+			out[x * 3 + ov[i]].uv       = Lerp(out[x * 3 + ov[i]].uv,       out[x * 3 + iv[0]].uv,       r);
+		}
+	} else if(n_ov == 1) {
+		Vertex v_temp[2];
+		VertexOut out_temp[2];
+		for(int i = 0; i < 2; ++i) {
+			float r = (epsilon - v[x * 3 + iv[i]].position.w) / (v[x * 3 + ov[0]].position.w - v[x * 3 + iv[i]].position.w);
+			v_temp  [i].position = Lerp(v  [x * 3 + ov[0]].position, v  [x * 3 + iv[i]].position, r);
+			out_temp[i].position = Lerp(out[x * 3 + ov[0]].position, out[x * 3 + iv[i]].position, r);
+			out_temp[i].normal   = Lerp(out[x * 3 + ov[0]].normal,   out[x * 3 + iv[i]].normal,   r);
+			out_temp[i].color    = Lerp(out[x * 3 + ov[0]].color,    out[x * 3 + iv[i]].color,    r);
+			out_temp[i].uv       = Lerp(out[x * 3 + ov[0]].uv,       out[x * 3 + iv[i]].uv,       r);
+		}
+		v  [x * 3 + ov[0]] = v_temp  [0];
+		out[x * 3 + ov[0]] = out_temp[0];
+
+		int n = atomicAdd(&n_triangle_clipped, 1);
+		if(ov[0] == 1) {
+			v  [(n_triangle + n) * 3 + 0] = v_temp[0];
+			v  [(n_triangle + n) * 3 + 1] = v_temp[1];
+			v  [(n_triangle + n) * 3 + 2] = v[x * 3 + iv[1]];
+			out[(n_triangle + n) * 3 + 0] = out_temp[0];
+			out[(n_triangle + n) * 3 + 1] = out_temp[1];
+			out[(n_triangle + n) * 3 + 2] = out[x * 3 + iv[1]];
+		} else {
+			v  [(n_triangle + n) * 3 + 0] = v_temp[1];
+			v  [(n_triangle + n) * 3 + 1] = v_temp[0];
+			v  [(n_triangle + n) * 3 + 2] = v[x * 3 + iv[1]];
+			out[(n_triangle + n) * 3 + 0] = out_temp[1];
+			out[(n_triangle + n) * 3 + 1] = out_temp[0];
+			out[(n_triangle + n) * 3 + 2] = out[x * 3 + iv[1]];
+		}
+	}
+}
+
 __global__
 void WindowSpace(Vertex *v) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
-	if(x >= n_triangle * 3) return;
+	if(x >= (n_triangle + n_triangle_clipped) * 3) return;
 
 	float w_inv = 1.f / v[x].position.w;
 	glm::mat4 m;
@@ -57,7 +125,7 @@ void WindowSpace(Vertex *v) {
 __global__
 void AssemTriangle(Vertex *v, Triangle *triangle) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
-	if(x >= n_triangle) return;
+	if(x >= (n_triangle + n_triangle_clipped)) return;
 
 	glm::vec2
 		p0(v[x * 3 + 0].position.x, v[x * 3 + 0].position.y),
@@ -73,7 +141,7 @@ void AssemTriangle(Vertex *v, Triangle *triangle) {
 		iv_max = v_max + 0.5f;
 
 	triangle[x].empty = (iv_min.x >= w || iv_min.y >= h || iv_max.x < 0 || iv_max.y < 0
-		|| v[0].position.z > 1 && v[1].position.z > 1 && v[2].position.z > 1
+		|| v[0].position.z > 1 && v[1].position.z > 1 && v[2].position.z > 1 // need 3D clipping
 		|| v[0].position.z <-1 && v[1].position.z <-1 && v[2].position.z <-1);
 	triangle[x].winding = Winding((p1.x - p0.x) * (p2.y - p1.y) - (p1.y - p0.y) * (p2.x - p1.x) < 0);
 

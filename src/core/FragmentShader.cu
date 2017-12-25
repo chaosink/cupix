@@ -89,12 +89,12 @@ void FragmentShader(FragmentIn &in, vec4 &color) {
 	// vec4 c = vec4(in.normal, 0.f);
 	vec4 c = vec4(in.normal * 0.5f + 0.5f, 0.5f); // normalized
 
-	/********** Visualization of uv **********/
-	// vec4 c = vec4(in.uv, 0.f, 0.f);
-
 	/********** Visualization of z **********/
 	// float depth = pow(in.z * 0.5f + 0.5f, 5);
 	// vec4 c = vec4(depth, depth, depth, 1.f);
+
+	/********** Visualization of uv **********/
+	// vec4 c = vec4(in.uv, 0.f, 0.f);
 
 	/********** Texture sampling **********/
 	// float4 c = tex2D(texture, in.uv.s, 1 - in.uv.t);
