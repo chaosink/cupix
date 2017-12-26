@@ -87,8 +87,8 @@ __device__
 void FragmentShader(FragmentIn &in, vec4 &color) {
 	/********** Visualization of normal **********/
 	// vec4 c = vec4(in.normal, 0.f);
-	vec4 c = vec4(abs(in.normal), 1.f);
-	// vec4 c = vec4(in.normal * 0.5f + 0.5f, 0.5f); // normalized
+	// vec4 c = vec4(abs(in.normal), 1.f);
+	vec4 c = vec4(in.normal * 0.5f + 0.5f, 0.5f); // normalized
 
 	/********** Visualization of uv **********/
 	// vec4 c = vec4(in.uv, 0.f, 0.f);

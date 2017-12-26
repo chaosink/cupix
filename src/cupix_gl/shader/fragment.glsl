@@ -56,8 +56,8 @@ vec3 Lighting() {
 void main() {
 	/********** Visualization of normal **********/
 	// vec4 c = vec4(in.normal, 0.f);
-	vec4 c = vec4(abs(vertexIn.normal), 1.f);
-	// vec4 c = vec4(vertexIn.normal * 0.5f + 0.5f, 0.5f); // normalized
+	// vec4 c = vec4(abs(vertexIn.normal), 1.f);
+	vec4 c = vec4(vertexIn.normal * 0.5f + 0.5f, 0.5f); // normalized
 
 	/********** Phong/Blinn-Phong shading **********/
 	// vec4 c = vec4(Lighting(), 1.f);
