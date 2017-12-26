@@ -30,7 +30,6 @@ __constant__ __device__ char bitmap[bitmap_size];
 
 __global__ void Clear(unsigned char *frame_buf, float *depth_buf);
 __global__ void NormalSpace(VertexIn *in, VertexOut *out, Vertex *v);
-__global__ void Clip(Vertex *v, VertexOut *out);
 __global__ void WindowSpace(Vertex *v);
 __global__ void AssemTriangle(Vertex *v, Triangle *triangle);
 __global__ void Rasterize(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, float *depth_buf, unsigned char* frame_buf);
@@ -129,7 +128,6 @@ void CUPix::Clear() {
 
 void CUPix::Draw() {
 	kernel::NormalSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_in_, vertex_out_, vertex_buf_);
-	kernel::Clip<<<(n_triangle_-1)/32+1, 32>>>(vertex_buf_, vertex_out_);
 	kernel::WindowSpace<<<(n_triangle_*3-1)/32+1, 32>>>(vertex_buf_);
 	kernel::AssemTriangle<<<(n_triangle_-1)/32+1, 32>>>(vertex_buf_, triangle_buf_);
 	cudaMemcpy(triangle_, triangle_buf_, sizeof(Triangle) * n_triangle_, cudaMemcpyDeviceToHost);
