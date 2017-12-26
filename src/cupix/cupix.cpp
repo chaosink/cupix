@@ -59,7 +59,7 @@ void UpdateGL(GLFWwindow *window, int window_w, int window_h) {
 
 int main(int argc, char *argv[]) {
 	if(argc < 2) {
-		printf("Usage: cupix obj_file [video_file]\n");
+		printf("Usage: cupix input_obj_file [output_video_file]\n");
 		return 0;
 	}
 	bool record = false;
@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
 		}));
 
 		pix.Draw();
-		pix.DrawFPS(fps.Update(time) + 0.5f);
+		// pix.DrawFPS(fps.Update(time) + 0.5f);
 		pix.AfterDraw();
 
 		UpdateGL(window, window_w, window_h);

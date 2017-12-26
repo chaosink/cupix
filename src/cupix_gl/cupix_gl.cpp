@@ -1,0 +1,46 @@
+#include "OGL.hpp"
+#include "Model.hpp"
+#include "Camera.hpp"
+#include "FPS.hpp"
+
+int main(int argc, char *argv[]) {
+	if(argc < 2) {
+		printf("Usage: cupix_gl input_obj_file [output_video_file]\n");
+		return 0;
+	}
+
+	int window_w = 1280;
+	int window_h = 720;
+
+	OGL ogl;
+	ogl.InitGLFW("Mesher", window_w, window_h);
+	ogl.InitGL("shader/vertex.glsl", "shader/fragment.glsl");
+
+	Model model(argv[1]);
+	ogl.Vertex(model.vertex(), model.n_vertex());
+	ogl.Normal(model.normal(), model.n_vertex());
+
+	double time = ogl.time();
+	Camera camera(ogl.window(), window_w, window_h, time);
+	FPS fps(time);
+	while(ogl.Alive()) {
+		time = ogl.time();
+		ogl.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glm::mat4 m;
+		glm::mat4 vp = camera.Update(time);
+		glm::mat4 mvp = vp * m;
+		ogl.MVP(mvp);
+		glm::mat4 v = camera.v();
+		glm::mat4 mv = v * m;
+		ogl.MV(mv);
+
+		ogl.Update();
+		fps.Update(time);
+	}
+	fps.Term();
+
+	ogl.Terminate();
+
+	return 0;
+}

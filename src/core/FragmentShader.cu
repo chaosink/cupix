@@ -71,23 +71,24 @@ vec4 BlinnPhong(FragmentIn &in, Light &light) {
 
 __device__
 vec4 Lighting(FragmentIn &in) {
-	vec4 c;
+	vec4 color;
 	for(int i = 0; i < n_light; i++) {
 		Light l = light[i];
 		if(i == 0) { // move light 0
 			l.position[0] = sinf(time) * 4.f;
 			l.position[2] = cosf(time) * 4.f;
 		}
-		c += BlinnPhong(in, l);
+		color += BlinnPhong(in, l);
 	}
-	return c;
+	return color;
 }
 
 __device__
 void FragmentShader(FragmentIn &in, vec4 &color) {
 	/********** Visualization of normal **********/
 	// vec4 c = vec4(in.normal, 0.f);
-	vec4 c = vec4(in.normal * 0.5f + 0.5f, 0.5f); // normalized
+	vec4 c = vec4(abs(in.normal), 1.f);
+	// vec4 c = vec4(in.normal * 0.5f + 0.5f, 0.5f); // normalized
 
 	/********** Visualization of uv **********/
 	// vec4 c = vec4(in.uv, 0.f, 0.f);

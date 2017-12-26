@@ -70,12 +70,29 @@ if(APPLE)
 	set_property(TARGET cupix PROPERTY BUILD_RPATH ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 endif()
 
+add_executable(cupix_gl
+	src/cupix_gl/cupix_gl.cpp
+	src/cupix_gl/OGL.cpp
+	src/utility/Camera.cpp
+	src/utility/Model.cpp
+	src/utility/FPS.cpp
+	src/utility/Texture.cpp
+	src/utility/Video.cpp
+	src/utility/Toggle.cpp
+)
+target_link_libraries(cupix_gl
+	glew_s
+	glfw
+)
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/utility/raw2mp4.sh ${CMAKE_CURRENT_BINARY_DIR}/raw2mp4.sh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/font/bitmap_font.data ${CMAKE_CURRENT_BINARY_DIR}/font/bitmap_font.data COPYONLY)
 file(GLOB textures RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/texture/*)
 foreach(tex ${textures})
 	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${tex} ${CMAKE_CURRENT_BINARY_DIR}/${tex} COPYONLY)
 endforeach()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cupix_gl/shader/vertex.glsl ${CMAKE_CURRENT_BINARY_DIR}/shader/vertex.glsl COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cupix_gl/shader/fragment.glsl ${CMAKE_CURRENT_BINARY_DIR}/shader/fragment.glsl COPYONLY)
 
 
 
