@@ -37,6 +37,12 @@ void NormalSpace(VertexIn *in, VertexOut *out, Vertex *v) {
 	if(x >= n_triangle * 3) return;
 
 	VertexShader(in[x], out[x], v[x]);
+
+	float w_inv = 1.f / v[x].position.w; // divide w beforehand
+	v[x].position.w = w_inv;
+	out[x].position *= w_inv;
+	out[x].normal   *= w_inv;
+	out[x].uv       *= w_inv;
 }
 
 __global__
@@ -44,9 +50,7 @@ void WindowSpace(Vertex *v) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	if(x >= n_triangle * 3) return;
 
-	float w_inv = 1.f / v[x].position.w;
-	glm::mat4 m;
-	glm::vec3 p = v[x].position * w_inv;
+	glm::vec3 p = v[x].position * v[x].position.w;
 	p.x = (p.x * 0.5f + 0.5f) * w;
 	p.y = (p.y * 0.5f + 0.5f) * h;
 	v[x].position.x = p.x;
@@ -86,28 +90,23 @@ void AssemTriangle(Vertex *v, Triangle *triangle) {
 
 __device__
 void Interpolate(Vertex *v, VertexOut *va, glm::vec3 &e, FragmentIn *f) { // va: vertex attibute
-	glm::vec3 we(
-		e.x / v[0].position.w,
-		e.y / v[1].position.w,
-		e.z / v[2].position.w);
-	float w = 1.f / (we.x + we.y + we.z);
+	float w = 1.f / (
+		e.x * v[0].position.w +
+		e.y * v[1].position.w +
+		e.z * v[2].position.w);
 
 	f->position = (
-		va[0].position * we.x +
-		va[1].position * we.y +
-		va[2].position * we.z) * w;
+		va[0].position * e.x +
+		va[1].position * e.y +
+		va[2].position * e.z) * w;
 	f->normal = (
-		va[0].normal * we.x +
-		va[1].normal * we.y +
-		va[2].normal * we.z) * w;
-	f->color = (
-		va[0].color * we.x +
-		va[1].color * we.y +
-		va[2].color * we.z) * w;
+		va[0].normal * e.x +
+		va[1].normal * e.y +
+		va[2].normal * e.z) * w;
 	f->uv = (
-		va[0].uv * we.x +
-		va[1].uv * we.y +
-		va[2].uv * we.z) * w;
+		va[0].uv * e.x +
+		va[1].uv * e.y +
+		va[2].uv * e.z) * w;
 
 	f->z =
 		e.x * v[0].position.z +

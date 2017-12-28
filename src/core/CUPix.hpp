@@ -36,13 +36,11 @@ enum Flag : unsigned char {
 struct VertexIn {
 	glm::vec3 position;
 	glm::vec3 normal;
-	glm::vec3 color;
 	glm::vec2 uv;
 };
 struct VertexOut {
 	glm::vec3 position;
 	glm::vec3 normal;
-	glm::vec3 color;
 	glm::vec2 uv;
 };
 struct Vertex {
@@ -59,7 +57,6 @@ struct FragmentIn {
 
 	glm::vec3 position;
 	glm::vec3 normal;
-	glm::vec3 color;
 	glm::vec2 uv;
 };
 struct Light {

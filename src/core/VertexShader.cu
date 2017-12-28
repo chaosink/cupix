@@ -19,7 +19,6 @@ void VertexShader(VertexIn &in, VertexOut &out, Vertex &v) {
 	// out.normal   = m * vec4(in.normal, 0.f);
 	out.position = in.position;
 	out.normal   = in.normal;
-	out.color    = in.color;
 	out.uv       = in.uv;
 }
 

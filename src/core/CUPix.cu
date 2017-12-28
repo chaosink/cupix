@@ -166,7 +166,6 @@ void CUPix::VertexData(int size, float *position, float *normal, float *uv) {
 	for(int i = 0; i < n_vertex_; i++) {
 		v[i].position = glm::vec3(position[i * 3], position[i * 3 + 1], position[i * 3 + 2]);
 		v[i].normal = glm::vec3(normal[i * 3], normal[i * 3 + 1], normal[i * 3 + 2]);
-		v[i].color = glm::vec3(rand() / RAND_MAX, rand() / RAND_MAX, rand() / RAND_MAX);
 		v[i].uv = glm::vec2(uv[i * 2], uv[i * 2 + 1]);
 	}
 	cudaFree(vertex_in_);

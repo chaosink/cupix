@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
 		}));
 
 		pix.Draw();
-		// pix.DrawFPS(fps.Update(time) + 0.5f);
+		pix.DrawFPS(fps.Update(time) + 0.5f);
 		pix.AfterDraw();
 
 		UpdateGL(window, window_w, window_h);
