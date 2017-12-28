@@ -12,14 +12,16 @@ extern __constant__ __device__ float time;
 
 using namespace glm;
 
-__device__ // https://www.shadertoy.com/view/Xt2czt
+// https://www.shadertoy.com/view/Xt2czt
+__device__
 vec4 FlickeringDots(vec2 fragCoord) {
 	vec2 uv = fragCoord - iResolution / 2.f;
 	float d = dot(uv, uv);
 	return vec4(0.5f + 0.5f * cos(d / 5.f + 10.f * time));
 }
 
-__device__ // https://www.shadertoy.com/view/lljSDy
+// https://www.shadertoy.com/view/lljSDy
+__device__
 vec4 Quadtree(vec2 U) {
 	vec4 o;
 	o -= o;
@@ -43,8 +45,9 @@ vec4 Quadtree(vec2 U) {
 	return o;
 }
 
+// https://www.shadertoy.com/view/4sjSRt
 #define N 10.f
-__device__ // https://www.shadertoy.com/view/4sjSRt
+__device__
 vec4 Sunflower(vec2 u) {
 	vec4 o;
 	o.x = w; o.y = h;
@@ -60,8 +63,9 @@ vec4 Sunflower(vec2 u) {
 }
 #undef N
 
+// https://www.shadertoy.com/view/4dsSzS
 //#define BALLS
-__device__ // https://www.shadertoy.com/view/4dsSzS
+__device__
 vec4 Mandeltunnel(vec2 fragCoord) {
 	vec2 uv = -1.f + 2.f*fragCoord / iResolution;
 	uv.x *= iResolution.x/iResolution.y;
@@ -100,8 +104,9 @@ vec4 Mandeltunnel(vec2 fragCoord) {
 	return col;
 }
 
+// https://www.shadertoy.com/view/Mdj3Rh
 #define MAX_ITERS 150.f
-__device__ // https://www.shadertoy.com/view/Mdj3Rh
+__device__
 vec4 MandelbrotsDarkerSide(vec2 fragCoord) {
 	vec2 uv = fragCoord / iResolution;
 	vec2 c = (2.f * uv - 1.f)
@@ -133,7 +138,8 @@ vec4 MandelbrotsDarkerSide(vec2 fragCoord) {
 }
 #undef MAX_ITERS
 
-__device__ // https://www.shadertoy.com/view/4dX3Rn
+// https://www.shadertoy.com/view/4dX3Rn
+__device__
 vec4 DeformFlower(vec2 fragCoord) {
 	vec2 p = (2.0f*fragCoord-iResolution)/min(iResolution.y,iResolution.x);
 
@@ -159,7 +165,8 @@ vec4 DeformFlower(vec2 fragCoord) {
 	return vec4( col, 1.0f );
 }
 
-__device__ // https://www.shadertoy.com/view/XsfGRn
+// https://www.shadertoy.com/view/XsfGRn
+__device__
 vec4 Heart2D(vec2 fragCoord) {
 	vec2 p = (2.0f*fragCoord-iResolution)/min(iResolution.y,iResolution.x);
 

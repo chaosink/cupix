@@ -40,10 +40,10 @@ __global__ void DownSample(unsigned char *frame_buf, unsigned char *pbo_buf);
 }
 
 
-CUPix::CUPix(int window_w, int window_h, GLuint pbo, AA aa = NOAA, bool record = false)
-	: window_w_(window_w), window_h_(window_h), frame_w_(window_w), frame_h_(window_h)
-	, aa_(aa), record_(record) {
-	if(aa_ != NOAA) {
+CUPix::CUPix(int window_w, int window_h, GLuint pbo, AA aa = AA::NOAA, bool record = false)
+	: window_w_(window_w), window_h_(window_h), record_(record),
+	frame_w_(window_w), frame_h_(window_h), aa_(aa) {
+	if(aa_ != AA::NOAA) {
 		frame_w_ *= 2;
 		frame_h_ *= 2;
 	}
@@ -77,7 +77,7 @@ void CUPix::BeforeDraw() {
 }
 
 void CUPix::AfterDraw() {
-	if(aa_ != NOAA) kernel::DownSample<<<dim3((window_w_-1)/32+1, (window_h_-1)/32+1), dim3(32, 32)>>>(frame_buf_, pbo_buf_);
+	if(aa_ != AA::NOAA) kernel::DownSample<<<dim3((window_w_-1)/32+1, (window_h_-1)/32+1), dim3(32, 32)>>>(frame_buf_, pbo_buf_);
 	else cudaMemcpy(pbo_buf_, frame_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToDevice);
 	if(record_) cudaMemcpy(frame_, pbo_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
 	cudaGraphicsUnmapResources(1, &pbo_resource_, NULL);
@@ -86,11 +86,11 @@ void CUPix::AfterDraw() {
 void CUPix::Enable(Flag flag) {
 	bool b = true;
 	switch(flag) {
-		case DEPTH_TEST:
+		case Flag::DEPTH_TEST:
 			cudaMemcpyToSymbol(kernel::depth_test, &b, 1); return;
-		case BLEND:
+		case Flag::BLEND:
 			cudaMemcpyToSymbol(kernel::blend, &b, 1); return;
-		case CULL_FACE:
+		case Flag::CULL_FACE:
 			cull_ = b; return;
 	}
 }
@@ -98,11 +98,11 @@ void CUPix::Enable(Flag flag) {
 void CUPix::Disable(Flag flag) {
 	bool b = false;
 	switch(flag) {
-		case DEPTH_TEST:
+		case Flag::DEPTH_TEST:
 			cudaMemcpyToSymbol(kernel::depth_test, &b, 1); return;
-		case BLEND:
+		case Flag::BLEND:
 			cudaMemcpyToSymbol(kernel::blend, &b, 1); return;
-		case CULL_FACE:
+		case Flag::CULL_FACE:
 			cull_ = b; return;
 	}
 }
@@ -133,9 +133,9 @@ void CUPix::Draw() {
 	cudaMemcpy(triangle_, triangle_buf_, sizeof(Triangle) * n_triangle_, cudaMemcpyDeviceToHost);
 	for(int i = 0; i < n_triangle_; i++)
 		if(!triangle_[i].empty)
-			if(!cull_ || (cull_face_ != FRONT_AND_BACK
-			&& (triangle_[i].winding == front_face_ != cull_face_))) {
-				if(aa_ == MSAA) {
+			if(!cull_ || (cull_face_ != Face::FRONT_AND_BACK
+			&& ((triangle_[i].winding == front_face_) != (cull_face_ == Face::FRONT)))) {
+				if(aa_ == AA::MSAA) {
 					glm::ivec2 v0 = triangle_[i].aabb[0] / 2, v1 = triangle_[i].aabb[1] / 2;
 					glm::ivec2 dim = v1 - v0 + 1;
 					kernel::RasterizeMSAA<<<dim3((dim.x-1)/8+1, (dim.y-1)/16+1), dim3(8, 16)>>>
@@ -149,7 +149,7 @@ void CUPix::Draw() {
 }
 
 void CUPix::DrawFPS(int fps) {
-	bool aa = aa_ != NOAA;
+	bool aa = aa_ != AA::NOAA;
 	kernel::DrawCharater<<<1, dim3(16, 16)>>>('F',  0, 0, aa, frame_buf_);
 	kernel::DrawCharater<<<1, dim3(16, 16)>>>('P', 16, 0, aa, frame_buf_);
 	kernel::DrawCharater<<<1, dim3(16, 16)>>>('S', 32 - 3, 0, aa, frame_buf_);
@@ -161,6 +161,8 @@ void CUPix::DrawFPS(int fps) {
 void CUPix::VertexData(int size, float *position, float *normal, float *uv) {
 	n_vertex_ = size;
 	n_triangle_ = n_vertex_ / 3;
+	cudaMemcpyToSymbol(kernel::n_triangle, &n_triangle_, sizeof(int));
+
 	VertexIn *v = new VertexIn[n_vertex_];
 	for(int i = 0; i < n_vertex_; i++) {
 		v[i].position = glm::vec3(position[i * 3], position[i * 3 + 1], position[i * 3 + 2]);
@@ -171,15 +173,18 @@ void CUPix::VertexData(int size, float *position, float *normal, float *uv) {
 	cudaMalloc(&vertex_in_, sizeof(VertexIn) * n_vertex_);
 	cudaMemcpy(vertex_in_, v, sizeof(VertexIn) * n_vertex_, cudaMemcpyHostToDevice);
 	delete[] v;
+
 	cudaFree(vertex_out_);
 	cudaMalloc(&vertex_out_, sizeof(VertexOut) * n_vertex_);
+
 	cudaFree(vertex_buf_);
 	cudaMalloc(&vertex_buf_, sizeof(Vertex) * n_vertex_);
+
 	cudaFree(triangle_buf_);
 	cudaMalloc(&triangle_buf_, sizeof(Triangle) * n_triangle_);
+
 	delete[] triangle_;
 	triangle_ = new Triangle[n_triangle_];
-	cudaMemcpyToSymbol(kernel::n_triangle, &n_triangle_, sizeof(int));
 }
 
 void CUPix::MVP(glm::mat4 &mvp) {

@@ -73,10 +73,10 @@ int main(int argc, char *argv[]) {
 	GLFWwindow* window = InitGLFW(window_w, window_h);
 	GLuint pbo = InitGL(window_w, window_h);
 
-	CUPix pix(window_w, window_h, pbo, NOAA, record);
+	CUPix pix(window_w, window_h, pbo, AA::NOAA, record);
 	pix.ClearColor(0.08f, 0.16f, 0.24f, 1.f);
-	// pix.Enable(CULL_FACE);
-	// pix.CullFace(BACK);
+	// pix.Disable(CULL_FACE);
+	// pix.CullFace(FRONT);
 	// pix.FrontFace(CW);
 
 	Light light[2]{

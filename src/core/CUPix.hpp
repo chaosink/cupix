@@ -13,21 +13,21 @@
 
 namespace cupix {
 
-enum AA : unsigned char {
+enum class AA : unsigned char {
 	NOAA,
 	MSAA,
 	SSAA
 };
-enum Winding : unsigned char {
+enum class Winding : unsigned char {
 	CCW,
 	CW
 };
-enum Face : unsigned char {
+enum class Face : unsigned char {
 	BACK,
 	FRONT,
 	FRONT_AND_BACK
 };
-enum Flag : unsigned char {
+enum class Flag : unsigned char {
 	DEPTH_TEST,
 	BLEND,
 	CULL_FACE,
@@ -69,14 +69,14 @@ class CUPix {
 	int window_w_, window_h_;
 	cudaGraphicsResource *pbo_resource_;
 	unsigned char *pbo_buf_;
-	bool record_;
 	unsigned char *frame_;
+	bool record_;
 
 	int frame_w_, frame_h_;
 	AA aa_;
 	bool cull_ = true;
-	Face cull_face_ = BACK;
-	Winding front_face_ = CCW;
+	Face cull_face_ = Face::BACK;
+	Winding front_face_ = Winding::CCW;
 	int n_triangle_, n_vertex_;
 	Triangle *triangle_ = NULL;
 	unsigned char *frame_buf_;
