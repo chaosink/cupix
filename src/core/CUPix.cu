@@ -34,7 +34,7 @@ __global__ void WindowSpace(Vertex *v);
 __global__ void AssemTriangle(Vertex *v, Triangle *triangle);
 __global__ void Rasterize(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, float *depth_buf, unsigned char* frame_buf);
 __global__ void RasterizeMSAA(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, float *depth_buf, unsigned char* frame_buf);
-__global__ void DrawCharater(int ch, int x0, int y0, bool ssaa, unsigned char *frame_buf);
+__global__ void DrawCharater(int ch, int x0, int y0, bool aa, unsigned char *frame_buf);
 __global__ void DownSample(unsigned char *frame_buf, unsigned char *pbo_buf);
 
 }
@@ -145,8 +145,7 @@ void CUPix::Draw() {
 					kernel::Rasterize<<<dim3((dim.x-1)/8+1, (dim.y-1)/16+1), dim3(8, 16)>>>
 						(triangle_[i].aabb[0], dim, vertex_buf_ + i * 3, vertex_out_ + i * 3, depth_buf_, frame_buf_);
 				}
-
-		}
+			}
 }
 
 void CUPix::DrawFPS(int fps) {

@@ -89,24 +89,24 @@ void AssemTriangle(Vertex *v, Triangle *triangle) {
 }
 
 __device__
-void Interpolate(Vertex *v, VertexOut *va, glm::vec3 &e, FragmentIn *f) { // va: vertex attibute
+void Interpolate(Vertex *v, VertexOut *vo, glm::vec3 &e, FragmentIn *f) {
 	float w = 1.f / (
 		e.x * v[0].position.w +
 		e.y * v[1].position.w +
 		e.z * v[2].position.w);
 
 	f->position = (
-		va[0].position * e.x +
-		va[1].position * e.y +
-		va[2].position * e.z) * w;
+		vo[0].position * e.x +
+		vo[1].position * e.y +
+		vo[2].position * e.z) * w;
 	f->normal = (
-		va[0].normal * e.x +
-		va[1].normal * e.y +
-		va[2].normal * e.z) * w;
+		vo[0].normal * e.x +
+		vo[1].normal * e.y +
+		vo[2].normal * e.z) * w;
 	f->uv = (
-		va[0].uv * e.x +
-		va[1].uv * e.y +
-		va[2].uv * e.z) * w;
+		vo[0].uv * e.x +
+		vo[1].uv * e.y +
+		vo[2].uv * e.z) * w;
 
 	f->z =
 		e.x * v[0].position.z +
@@ -115,7 +115,7 @@ void Interpolate(Vertex *v, VertexOut *va, glm::vec3 &e, FragmentIn *f) { // va:
 }
 
 __global__
-void Rasterize(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, float *depth_buf, unsigned char* frame_buf) {
+void Rasterize(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *vo, float *depth_buf, unsigned char* frame_buf) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	int y = threadIdx.y + blockIdx.y * blockDim.y;
 	if(x >= dim.x || y >= dim.y) return;
@@ -137,7 +137,7 @@ void Rasterize(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, floa
 	|| e0 <= 0 && e1 <= 0 && e2 <= 0) {
 		FragmentIn fragment = {glm::vec2(x, y)};
 		glm::vec3 e = glm::vec3(e0, e1, e2) / (e0 + e1 + e2);
-		Interpolate(v, va, e, &fragment);
+		Interpolate(v, vo, e, &fragment);
 		if(fragment.z > 1 || fragment.z < -1) return; // need 3D clipping
 		if(!depth_test || 1 - fragment.z > depth_buf[i_pixel]) {
 			depth_buf[i_pixel] = 1 - fragment.z;
@@ -165,7 +165,7 @@ void Rasterize(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, floa
 }
 
 __global__
-void RasterizeMSAA(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, float *depth_buf, unsigned char* frame_buf) {
+void RasterizeMSAA(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *vo, float *depth_buf, unsigned char* frame_buf) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	int y = threadIdx.y + blockIdx.y * blockDim.y;
 	if(x >= dim.x || y >= dim.y) return;
@@ -210,7 +210,7 @@ void RasterizeMSAA(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, 
 
 	FragmentIn fragment = {glm::vec2(xx, yy)};
 	glm::vec3 e = glm::vec3(e0, e1, e2) / (e0 + e1 + e2);
-	Interpolate(v, va, e, &fragment);
+	Interpolate(v, vo, e, &fragment);
 	// if(fragment.z > 1 || fragment.z < -1) return; // extrapolation may cause z not in [-1,1]
 	glm::vec4 color;
 	FragmentShader(fragment, color); // run fragment shader noly once
@@ -240,7 +240,7 @@ void RasterizeMSAA(glm::ivec2 corner, glm::ivec2 dim, Vertex *v, VertexOut *va, 
 }
 
 __global__
-void DrawCharater(int ch, int x0, int y0, bool ssaa, unsigned char *frame_buf) {
+void DrawCharater(int ch, int x0, int y0, bool aa, unsigned char *frame_buf) {
 	int x = threadIdx.x + blockIdx.x * blockDim.x;
 	int y = threadIdx.y + blockIdx.y * blockDim.y;
 	int i_pixel = w * (y + y0) + x + x0;
@@ -248,7 +248,7 @@ void DrawCharater(int ch, int x0, int y0, bool ssaa, unsigned char *frame_buf) {
 	int offset = ch * 32;
 	char c = bitmap[offset + (15 - y) * 2 + x / 8];
 	if(!(c & bit[x % 8])) return;
-	if(ssaa) {
+	if(aa) {
 		int p0 = (((y + y0) * 2 + 0) * w + (x + x0) * 2 + 0) * 3;
 		int p1 = (((y + y0) * 2 + 0) * w + (x + x0) * 2 + 1) * 3;
 		int p2 = (((y + y0) * 2 + 1) * w + (x + x0) * 2 + 0) * 3;
