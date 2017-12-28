@@ -72,7 +72,7 @@ CUPix::~CUPix() {
 
 void CUPix::BeforeDraw() {
 	size_t size;
-	cudaGraphicsMapResources(1, &pbo_resource_, NULL);
+	cudaGraphicsMapResources(1, &pbo_resource_, nullptr);
 	cudaGraphicsResourceGetMappedPointer((void**)&pbo_buf_, &size, pbo_resource_);
 }
 
@@ -80,7 +80,7 @@ void CUPix::AfterDraw() {
 	if(aa_ != AA::NOAA) kernel::DownSample<<<dim3((window_w_-1)/32+1, (window_h_-1)/32+1), dim3(32, 32)>>>(frame_buf_, pbo_buf_);
 	else cudaMemcpy(pbo_buf_, frame_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToDevice);
 	if(record_) cudaMemcpy(frame_, pbo_buf_, window_w_ * window_h_ * 3, cudaMemcpyDeviceToHost);
-	cudaGraphicsUnmapResources(1, &pbo_resource_, NULL);
+	cudaGraphicsUnmapResources(1, &pbo_resource_, nullptr);
 }
 
 void CUPix::Enable(Flag flag) {
@@ -225,7 +225,7 @@ void CUPix::Texture(unsigned char *d, int w, int h, bool gamma_correction) {
 	cudaChannelFormatDesc desc =
 		cudaCreateChannelDesc(8, 8, 8, 8, cudaChannelFormatKindUnsigned);
 
-	cudaBindTexture2D(NULL, kernel::texture, texture_buf_, desc, w, h, pitch);
+	cudaBindTexture2D(nullptr, kernel::texture, texture_buf_, desc, w, h, pitch);
 }
 
 void CUPix::Lights(int n, Light *light) {

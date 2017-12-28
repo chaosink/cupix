@@ -5,8 +5,8 @@
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
 
-void PrintMat(glm::mat4 &m, const char *indent = "", const char *name = NULL);
-void PrintVec(glm::vec3 &v, const char *indent = "", const char *name = NULL);
+void PrintMat(glm::mat4 &m, const char *indent = "", const char *name = nullptr);
+void PrintVec(glm::vec3 &v, const char *indent = "", const char *name = nullptr);
 
 class Camera {
 	const double PI  = 3.14159265358979323846;

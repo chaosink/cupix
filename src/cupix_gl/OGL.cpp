@@ -25,7 +25,7 @@ GLFWwindow* OGL::InitGLFW(const char *window_title, int window_w, int window_h) 
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
-	window_ = glfwCreateWindow(window_w_, window_h_, window_title, NULL, NULL);
+	window_ = glfwCreateWindow(window_w_, window_h_, window_title, nullptr, nullptr);
 	if(!window_) {
 		glfwTerminate();
 		exit(EXIT_FAILURE);
@@ -69,28 +69,28 @@ GLuint OGL::LoadShaderFromString(const char *vertex_string, const char *fragment
 	// Compile Vertex Shader
 	printf("Compiling shader: %s\n", "vertex");
 	char const * VertexSourcePointer = vertex_string;
-	glShaderSource(VertexShaderID, 1, &VertexSourcePointer , NULL);
+	glShaderSource(VertexShaderID, 1, &VertexSourcePointer , nullptr);
 	glCompileShader(VertexShaderID);
 	// Check Vertex Shader
 	glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
 	glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	if(InfoLogLength > 0) {
 		std::vector<char> VertexShaderErrorMessage(InfoLogLength + 1);
-		glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+		glGetShaderInfoLog(VertexShaderID, InfoLogLength, nullptr, &VertexShaderErrorMessage[0]);
 		printf("%s\n", &VertexShaderErrorMessage[0]);
 	}
 
 	// Compile Fragment Shader
 	printf("Compiling shader: %s\n", "fragment");
 	char const * FragmentSourcePointer = fragment_string;
-	glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer , NULL);
+	glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer , nullptr);
 	glCompileShader(FragmentShaderID);
 	// Check Fragment Shader
 	glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
 	glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	if ( InfoLogLength > 0 ){
 		std::vector<char> FragmentShaderErrorMessage(InfoLogLength + 1);
-		glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
+		glGetShaderInfoLog(FragmentShaderID, InfoLogLength, nullptr, &FragmentShaderErrorMessage[0]);
 		printf("%s\n", &FragmentShaderErrorMessage[0]);
 	}
 
@@ -98,14 +98,14 @@ if(geometry_string) {
 	// Compile Geometry Shader
 	printf("Compiling shader: %s\n", "geometry");
 	char const * GeometrySourcePointer = geometry_string;
-	glShaderSource(GeometryShaderID, 1, &GeometrySourcePointer , NULL);
+	glShaderSource(GeometryShaderID, 1, &GeometrySourcePointer , nullptr);
 	glCompileShader(GeometryShaderID);
 	// Check Geometry Shader
 	glGetShaderiv(GeometryShaderID, GL_COMPILE_STATUS, &Result);
 	glGetShaderiv(GeometryShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	if ( InfoLogLength > 0 ){
 		std::vector<char> GeometryShaderErrorMessage(InfoLogLength + 1);
-		glGetShaderInfoLog(GeometryShaderID, InfoLogLength, NULL, &GeometryShaderErrorMessage[0]);
+		glGetShaderInfoLog(GeometryShaderID, InfoLogLength, nullptr, &GeometryShaderErrorMessage[0]);
 		printf("%s\n", &GeometryShaderErrorMessage[0]);
 	}
 }
@@ -124,7 +124,7 @@ if(geometry_string)
 	glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	if ( InfoLogLength > 0 ){
 		std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
-		glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
+		glGetProgramInfoLog(ProgramID, InfoLogLength, nullptr, &ProgramErrorMessage[0]);
 		printf("%s\n", &ProgramErrorMessage[0]);
 	}
 
@@ -176,7 +176,7 @@ void OGL::LoadShader(const char *vertex_file_path, const char *fragment_file_pat
 		}
 	}
 
-	shader_ = LoadShaderFromString(VertexShaderCode.c_str(), FragmentShaderCode.c_str(), geometry_file_path ? GeometryShaderCode.c_str() : NULL);
+	shader_ = LoadShaderFromString(VertexShaderCode.c_str(), FragmentShaderCode.c_str(), geometry_file_path ? GeometryShaderCode.c_str() : nullptr);
 	glUseProgram(shader_);
 	mvp_ = glGetUniformLocation(shader_, "mvp");
 	mv_ = glGetUniformLocation(shader_, "mv");

@@ -18,7 +18,7 @@ GLFWwindow* InitGLFW(int window_w, int window_h) {
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
-	GLFWwindow *window = glfwCreateWindow(window_w, window_h, "CUPix", NULL, NULL);
+	GLFWwindow *window = glfwCreateWindow(window_w, window_h, "CUPix", nullptr, nullptr);
 	if(!window) {
 		glfwTerminate();
 		exit(EXIT_FAILURE);
@@ -42,7 +42,7 @@ GLuint InitGL(int window_w, int window_h) {
 	GLuint pbo;
 	glGenBuffers(1, &pbo);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, window_w * window_h * 3, NULL, GL_DYNAMIC_COPY);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, window_w * window_h * 3, nullptr, GL_DYNAMIC_COPY);
 	return pbo;
 }
 
