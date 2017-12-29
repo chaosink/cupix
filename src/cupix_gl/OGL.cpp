@@ -88,7 +88,7 @@ GLuint OGL::LoadShaderFromString(const char *vertex_string, const char *fragment
 	// Check Fragment Shader
 	glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
 	glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	if ( InfoLogLength > 0 ){
+	if(InfoLogLength > 0) {
 		std::vector<char> FragmentShaderErrorMessage(InfoLogLength + 1);
 		glGetShaderInfoLog(FragmentShaderID, InfoLogLength, nullptr, &FragmentShaderErrorMessage[0]);
 		printf("%s\n", &FragmentShaderErrorMessage[0]);
@@ -103,7 +103,7 @@ if(geometry_string) {
 	// Check Geometry Shader
 	glGetShaderiv(GeometryShaderID, GL_COMPILE_STATUS, &Result);
 	glGetShaderiv(GeometryShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	if ( InfoLogLength > 0 ){
+	if(InfoLogLength > 0) {
 		std::vector<char> GeometryShaderErrorMessage(InfoLogLength + 1);
 		glGetShaderInfoLog(GeometryShaderID, InfoLogLength, nullptr, &GeometryShaderErrorMessage[0]);
 		printf("%s\n", &GeometryShaderErrorMessage[0]);
@@ -122,7 +122,7 @@ if(geometry_string)
 	// Check the program
 	glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
 	glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	if ( InfoLogLength > 0 ){
+	if(InfoLogLength > 0) {
 		std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
 		glGetProgramInfoLog(ProgramID, InfoLogLength, nullptr, &ProgramErrorMessage[0]);
 		printf("%s\n", &ProgramErrorMessage[0]);
