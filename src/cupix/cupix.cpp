@@ -75,6 +75,8 @@ int main(int argc, char *argv[]) {
 
 	CUPix pix(window_w, window_h, pbo, AA::NOAA, record);
 	pix.ClearColor(0.08f, 0.16f, 0.24f, 1.f);
+	// pix.Disable(Flag::DEPTH_TEST);
+	// pix.Enable(Flag::BLEND);
 	// pix.Disable(Flag::CULL_FACE);
 	// pix.CullFace(Face::FRONT);
 	// pix.FrontFace(Winding::CW);
