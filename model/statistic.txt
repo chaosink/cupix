@@ -1,0 +1,44 @@
+model							face	vertex
+
+tri.obj							1		3
+cube_normal.obj					12		36
+cube.obj						12		36
+flower.obj						640		1920
+suzanne.obj						968		2904
+suzanne_smooth.obj				968		2904
+cow.obj							5804	17412
+cow_smooth.obj					5804	17412
+sponza.obj						279105	837315
+sponza_top.obj					279105	837315d
+
+blender/plane.obj				2		6
+blender/cube_debug.obj			12		36
+blender/cube.obj				12		36
+blender/cube_smooth.obj			12		36
+blender/cone.obj				62		186
+blender/cone_smooth.obj			62		186
+blender/sphere_ico.obj			80		240
+blender/sphere_ico_smooth.obj	80		240
+blender/cylinder.obj			124		372
+blender/cylinder_smooth.obj		124		372
+blender/sphere.obj				960		2880
+blender/sphere_smooth.obj		960		2880
+blender/suzanne_low.obj			968		2904
+blender/suzanne_low_smooth.obj	968		2904
+blender/torus.obj				1152	3456
+blender/torus_smooth.obj		1152	3456
+
+other/teapot.obj				992		2976
+other/dolphins.obj				1689	5067
+other/soccerball.obj			3516	10548
+other/rose+vase.obj				3359	10077
+other/desk.obj					4556	13668
+other/f-16.obj					4592	13776
+other/al.obj					7124	21372
+other/porsche.obj				7322	21966
+other/flowers.obj				7625	22875
+other/mario.obj					21846	65538
+other/ancient_door.obj			55204	165612
+other/suzanne_high.obj			62976	188928
+other/suzanne_high_smooth.obj	62976	188928
+other/bunny.obj					69451	208353
