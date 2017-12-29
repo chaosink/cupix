@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 		double time = ogl.time();
 		ogl.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glm::mat4 m;
+		glm::mat4 m = model.Update(time);
 		glm::mat4 vp = camera.Update(time);
 		glm::mat4 mvp = vp * m;
 		ogl.MVP(mvp);
