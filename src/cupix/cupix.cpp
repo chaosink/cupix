@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 
 	Camera camera(window, window_w, window_h);
 	FPS fps;
-	Toggle toggle(window, GLFW_KEY_T, true); // init state = true
+	Toggle toggle(window, GLFW_KEY_R, true); // init state = true
 	Video video(window_w, window_h);
 	while(glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window)) {
 		double time = glfwGetTime();
