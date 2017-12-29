@@ -256,8 +256,8 @@ bool OGL::Alive() {
 	return glfwGetKey(window_, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window_);
 }
 
-void OGL::Clear(GLenum bit) {
-	glClear(bit);
+void OGL::Clear() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void OGL::Update() {

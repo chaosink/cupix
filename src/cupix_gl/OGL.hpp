@@ -28,7 +28,7 @@ public:
 	void MVP(glm::mat4 mvp);
 	void MV(glm::mat4 mv);
 	bool Alive();
-	void Clear(GLenum bit);
+	void Clear();
 	void Update();
 	double time() {
 		return glfwGetTime();

@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 	int window_h = 720;
 
 	OGL ogl;
-	ogl.InitGLFW("Mesher", window_w, window_h);
+	ogl.InitGLFW("CUPix OpenGL", window_w, window_h);
 	ogl.InitGL("shader/vertex.glsl", "shader/fragment.glsl");
 
 	Model model(ogl.window(), argv[1]);
@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 	FPS fps;
 	while(ogl.Alive()) {
 		double time = ogl.time();
-		ogl.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		ogl.Clear();
 
 		glm::mat4 m = model.Update(time);
 		glm::mat4 vp = camera.Update(time);
