@@ -31,14 +31,15 @@ class Camera {
 	float mouse_turn_factor_ = 0.002f;
 	float scroll_speed_ = 2.f;
 
-	double time_;;
+	double time_ = 0;
 	double x_, y_;
 
 	Toggle fix_ = Toggle(window_, GLFW_KEY_F, false);
 	Toggle print_vp_ = Toggle(window_, GLFW_KEY_P, false);
 	bool print_pressed = false;
+
 public:
-	Camera(GLFWwindow *window, int window_w, int window_h, double time);
+	Camera(GLFWwindow *window, int window_w, int window_h);
 	glm::mat4 v() {
 		return v_;
 	}

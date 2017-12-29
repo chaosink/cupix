@@ -2,10 +2,11 @@
 
 #include <cstdio>
 
+#include "glm/gtc/matrix_transform.hpp"
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
-Model::Model(const char *file_name) {
+Model::Model(GLFWwindow *window, const char *file_name) : window_(window) {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
@@ -46,4 +47,68 @@ Model::Model(const char *file_name) {
 		}
 	}
 	printf("Model loaded. Number of faces: %d. Number of vertices: %d\n", n_vertex_ / 3, n_vertex_);
+}
+
+glm::mat4 Model::Update(double time) {
+	float delta_time = time - time_;
+	time_ = time;
+	// -y
+	if(glfwGetKey(window_, GLFW_KEY_G) == GLFW_PRESS) {
+		m_ = glm::rotate(
+			glm::mat4(),
+			delta_time * turn_speed_,
+			glm::vec3(0, -1, 0)
+		) * m_;
+	}
+	// +y
+	if(glfwGetKey(window_, GLFW_KEY_J) == GLFW_PRESS) {
+		m_ = glm::rotate(
+			glm::mat4(),
+			delta_time * turn_speed_,
+			glm::vec3(0, 1, 0)
+		) * m_;
+	}
+	// +x
+	if(glfwGetKey(window_, GLFW_KEY_H) == GLFW_PRESS) {
+		m_ = glm::rotate(
+			glm::mat4(),
+			delta_time * turn_speed_,
+			glm::vec3(1, 0, 0)
+		) * m_;
+	}
+	// -x
+	if(glfwGetKey(window_, GLFW_KEY_Y) == GLFW_PRESS) {
+		m_ = glm::rotate(
+			glm::mat4(),
+			delta_time * turn_speed_,
+			glm::vec3(-1, 0, 0)
+		) * m_;
+	}
+	// +z
+	if(glfwGetKey(window_, GLFW_KEY_T) == GLFW_PRESS) {
+		m_ = glm::rotate(
+			glm::mat4(),
+			delta_time * turn_speed_,
+			glm::vec3(0, 0, 1)
+		) * m_;
+	}
+	// -z
+	if(glfwGetKey(window_, GLFW_KEY_U) == GLFW_PRESS) {
+		m_ = glm::rotate(
+			glm::mat4(),
+			delta_time * turn_speed_,
+			glm::vec3(0, 0, -1)
+		) * m_;
+	}
+
+	if(glfwGetKey(window_, GLFW_KEY_PERIOD) == GLFW_PRESS)
+		turn_speed_ *= pow(1.1f, delta_time * 20);
+	if(glfwGetKey(window_, GLFW_KEY_COMMA) == GLFW_PRESS)
+		turn_speed_ *= pow(0.9f, delta_time * 20);
+
+	if(glfwGetKey(window_, GLFW_KEY_M) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_SPACE) == GLFW_PRESS) {
+		m_ = glm::mat4();
+	}
+
+	return m_;
 }

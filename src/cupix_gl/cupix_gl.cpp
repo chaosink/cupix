@@ -16,15 +16,14 @@ int main(int argc, char *argv[]) {
 	ogl.InitGLFW("Mesher", window_w, window_h);
 	ogl.InitGL("shader/vertex.glsl", "shader/fragment.glsl");
 
-	Model model(argv[1]);
+	Model model(ogl.window(), argv[1]);
 	ogl.Vertex(model.vertex(), model.n_vertex());
 	ogl.Normal(model.normal(), model.n_vertex());
 
-	double time = ogl.time();
-	Camera camera(ogl.window(), window_w, window_h, time);
-	FPS fps(time);
+	Camera camera(ogl.window(), window_w, window_h);
+	FPS fps;
 	while(ogl.Alive()) {
-		time = ogl.time();
+		double time = ogl.time();
 		ogl.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glm::mat4 m;

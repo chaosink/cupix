@@ -13,7 +13,7 @@ using namespace cupix;
 GLFWwindow* InitGLFW(int window_w, int window_h) {
 	if(!glfwInit()) exit(EXIT_FAILURE);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
@@ -89,24 +89,23 @@ int main(int argc, char *argv[]) {
 	};
 	pix.Lights(2, light);
 
-	Model model(argv[1]);
+	Model model(window, argv[1]);
 	pix.VertexData(model.n_vertex(), model.vertex(), model.normal(), model.uv());
 
 	Texture texture("texture/texture.jpg");
 	pix.Texture(texture.data(), texture.w(), texture.h(), false); // gamma_correction = false
 
-	double time = glfwGetTime();
-	Camera camera(window, window_w, window_h, time);
-	FPS fps(time);
+	Camera camera(window, window_w, window_h);
+	FPS fps;
 	Toggle toggle(window, GLFW_KEY_T, true); // init state = true
 	Video video(window_w, window_h);
 	while(glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window)) {
-		time = glfwGetTime();
+		double time = glfwGetTime();
 
 		pix.BeforeDraw();
 		pix.Clear();
 
-		glm::mat4 m;
+		glm::mat4 m = model.Update(time);
 		glm::mat4 vp = camera.Update(time);
 		glm::mat4 mvp = vp * m;
 		pix.MVP(mvp);

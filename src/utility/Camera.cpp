@@ -27,8 +27,8 @@ void PrintVec(glm::vec3 &v, const char *indent, const char *name) {
 	printf("glm::vec3(%f, %f, %f);\n", v.x, v.y, v.z);
 }
 
-Camera::Camera(GLFWwindow *window, int window_w, int window_h, double time)
-	: window_(window), window_w_(window_w), window_h_(window_h), time_(time) {
+Camera::Camera(GLFWwindow *window, int window_w, int window_h)
+	: window_(window), window_w_(window_w), window_h_(window_h) {
 	glfwSetScrollCallback(window, ScrollCallback);
 	glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwGetCursorPos(window_, &x_, &y_);
@@ -64,19 +64,19 @@ glm::mat4 Camera::Update(double time) {
 	y_ = y;
 
 	// turn right
-	if(glfwGetKey(window_, GLFW_KEY_L) == GLFW_PRESS) {
+	if(glfwGetKey(window_, GLFW_KEY_SEMICOLON) == GLFW_PRESS) {
 		angle_horizontal_ -= delta_time * turn_speed_;
 	}
 	// turn left
-	if(glfwGetKey(window_, GLFW_KEY_J) == GLFW_PRESS) {
+	if(glfwGetKey(window_, GLFW_KEY_K) == GLFW_PRESS) {
 		angle_horizontal_ += delta_time * turn_speed_;
 	}
 	// turn  up
-	if(glfwGetKey(window_, GLFW_KEY_I) == GLFW_PRESS) {
+	if(glfwGetKey(window_, GLFW_KEY_O) == GLFW_PRESS) {
 		angle_vertical_ += delta_time * turn_speed_;
 	}
 	// turn down
-	if(glfwGetKey(window_, GLFW_KEY_K) == GLFW_PRESS) {
+	if(glfwGetKey(window_, GLFW_KEY_L) == GLFW_PRESS) {
 		angle_vertical_ -= delta_time * turn_speed_;
 	}
 
@@ -114,14 +114,14 @@ glm::mat4 Camera::Update(double time) {
 	if(glfwGetKey(window_, GLFW_KEY_Q) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
 		position_ -= delta_time * move_speed_ * up;
 	if(glfwGetKey(window_, GLFW_KEY_EQUAL) == GLFW_PRESS)
-		move_speed_ *= 1.1f;
+		move_speed_ *= pow(1.1f, delta_time * 20);
 	if(glfwGetKey(window_, GLFW_KEY_MINUS) == GLFW_PRESS)
-		move_speed_ *= 0.9f;
-	if(glfwGetKey(window_, GLFW_KEY_RIGHT_BRACKET ) == GLFW_PRESS)
-		turn_speed_ *= 1.1f;
-	if(glfwGetKey(window_, GLFW_KEY_LEFT_BRACKET ) == GLFW_PRESS)
-		turn_speed_ *= 0.9f;
-	if(glfwGetKey(window_, GLFW_KEY_SPACE) == GLFW_PRESS) {
+		move_speed_ *= pow(0.9f, delta_time * 20);
+	if(glfwGetKey(window_, GLFW_KEY_RIGHT_BRACKET) == GLFW_PRESS)
+		turn_speed_ *= pow(1.1f, delta_time * 20);
+	if(glfwGetKey(window_, GLFW_KEY_LEFT_BRACKET) == GLFW_PRESS)
+		turn_speed_ *= pow(0.9f, delta_time * 20);
+	if(glfwGetKey(window_, GLFW_KEY_C) == GLFW_PRESS || glfwGetKey(window_, GLFW_KEY_SPACE) == GLFW_PRESS) {
 		position_ = position_init_;
 		angle_horizontal_ = angle_horizontal_init_;
 		angle_vertical_ = angle_vertical_init_;
