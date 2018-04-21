@@ -28,6 +28,7 @@ GLFWwindow* OGL::InitGLFW(const char *window_title, int window_w, int window_h) 
 	window_ = glfwCreateWindow(window_w_, window_h_, window_title, nullptr, nullptr);
 	if(!window_) {
 		glfwTerminate();
+		fprintf(stderr, "Failed to create GLFW window\n");
 		exit(EXIT_FAILURE);
 	}
 	glfwMakeContextCurrent(window_);
